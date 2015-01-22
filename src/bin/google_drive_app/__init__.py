@@ -4,10 +4,12 @@ This module includes classes necessary to export and import lookups to Google sp
 
 from google_drive_app import GoogleLookupSync
 
-completed = GoogleLookupSync.import_to_lookup_file("etc/apps/search/lookups/some_lookup_file.csv", "Survey Results", "raw_data", GoogleLookupSync.OperationAction.OVERWRITE)
+login = 'someone@gmail.com'
+password = 'super_secret'
 
-if completed:
-    print "import was successful!"
+google_lookup_sync = GoogleLookupSync(login, password)
+
+google_lookup_sync.import_to_lookup_file(lookup_name='some_lookup.csv', namespace='search', owner='nobody', google_spread_sheet_name='test_case_import', worksheet_name='data', session_key=session_key)
 
 """
 
@@ -33,7 +35,7 @@ class GoogleLookupSync(object):
         EXPORT      = 2
         SYNCHRONIZE = 3
         
-    def __init__(self, login=None, password=None, oauth2credentials=None):
+    def __init__(self, login=None, password=None, oauth2credentials=None, logger=None):
         
         self.gspread_client = None
                 
@@ -42,8 +44,13 @@ class GoogleLookupSync(object):
         else:
             self.authenticate_by_password(login, password)
             
-        self.logger = None
+        self.logger = logger
+        
+        # Initialize a logger. This will cause it be initialized if one is not set yet.
         self.get_logger()
+        
+        #SPL-95681
+        self.update_lookup_with_rest = False
         
     def authenticate_by_password(self, login, password):
         """
@@ -108,6 +115,9 @@ class GoogleLookupSync(object):
     def copy_file(self, src, dst):
         pass
     
+    def set_logger(self, logger):
+        self.logger = logger
+    
     def get_logger(self):
         """
         Setup a logger for this class.
@@ -168,12 +178,22 @@ class GoogleLookupSync(object):
           create_if_non_existent (bool, optional): Defaults to False.
         """
         
-        destination_full_path = lookupfiles.SplunkLookupTableFile.get(lookupfiles.SplunkLookupTableFile.build_id(lookup_name, namespace, owner), sessionKey=session_key).path
+        splunk_lookup_table = lookupfiles.SplunkLookupTableFile.get(lookupfiles.SplunkLookupTableFile.build_id(lookup_name, namespace, owner), sessionKey=session_key)
+
+        destination_full_path = splunk_lookup_table.path
+        
+        if namespace is None and splunk_lookup_table is not None:
+            namespace = splunk_lookup_table.namespace
+            
+        if owner is None:
+            owner = "nobody"
+        
+        self.get_logger().info("Lookup file path=%s", destination_full_path)
         
         if destination_full_path is None and not create_if_non_existent:
             raise Exception("Lookup file to import into does not exist")
         
-        elif create_if_non_existent:
+        elif create_if_non_existent and destination_full_path is None:
             # TODO handle user-based lookups
             destination_full_path = make_splunkhome_path(['etc', 'apps', namespace, 'lookups', lookup_name])
         
@@ -201,35 +221,42 @@ class GoogleLookupSync(object):
         google_work_sheet = self.get_or_make_sheet_if_necessary(google_spread_sheet, worksheet_name)
         
         # Make a temporary lookup file
-        temp_file = lookupfiles.get_temporary_lookup_file()
+        temp_file_handle = lookupfiles.get_temporary_lookup_file()
+        temp_file_name = temp_file_handle.name
         
         # Get the contents of spreadsheet and import it into the lookup
         list_of_lists = google_work_sheet.get_all_values()
         
-        with temp_file: #open(temp_file.name, 'w') as temp_file_handle:
-            
-            # Open a CSV writer to edit the file
-            csv_writer = csv.writer(temp_file, lineterminator='\n')
-            
-            for row in list_of_lists:
+        #with temp_file: #open(temp_file.name, 'w') as temp_file_handle:
+        try:
+            if temp_file_handle is not None and os.path.isfile(temp_file_name):
                 
-                # Update the CSV with the row
-                csv_writer.writerow(row)
+                # Open a CSV writer to edit the file
+                csv_writer = csv.writer(temp_file_handle, lineterminator='\n')
                 
+                for row in list_of_lists:
+                    
+                    # Update the CSV with the row
+                    csv_writer.writerow(row)
+        
+        finally:   
+            if temp_file_handle is not None:
+                temp_file_handle.close()
+        
         # Determine if the lookup file exists, create it if it doesn't
         lookup_file_exists = os.path.exists(destination_full_path)
         
-        if not lookup_file_exists or lookup_name is None:
+        if self.update_lookup_with_rest == False or not lookup_file_exists or lookup_name is None:
             
             # If we are not allowed to make the lookup file, then throw an exception
-            if not create_if_non_existent:
+            if not lookup_file_exists and not create_if_non_existent:
                 raise Exception("The lookup file to import the content to does not exist")
             
             # Manually copy the file to create it
             if lookup_file_exists:
-                shutil.copy(temp_file.name, destination_full_path)
+                shutil.copy(temp_file_name, destination_full_path)
             else:
-                shutil.move(temp_file.name, destination_full_path)
+                shutil.move(temp_file_name, destination_full_path)
                 
             self.get_logger().info('Lookup created successfully, user=%s, namespace=%s, lookup_file=%s', owner, namespace, lookup_name)
             
@@ -241,13 +268,17 @@ class GoogleLookupSync(object):
             
             # Default to nobody if the owner is None
             if owner is None:
-                owner = "nobody" 
+                owner = "nobody"
+                
+            if namespace is None:
+                # Get the namespace from the lookup file entry if we don't know it already
+                namespace = lookupfiles.SplunkLookupTableFile.get(lookupfiles.SplunkLookupTableFile.build_id(lookup_name, None, owner), sessionKey=session_key).namespace
+                
+            
+            #self.get_logger().info("filename=%s, lookup_file=%s, namespace=%s, owner=%s, key=%s", temp_file_name, lookup_name, namespace, owner, session_key)
             
             # Persist the changes from the temporary file
-            print "\n\nlookupfiles.update_lookup_table(", temp_file.name, lookup_name, namespace, owner, session_key, ")"
-            
-            lookupfiles.update_lookup_table(filename=temp_file.name, lookup_file=lookup_name, namespace=namespace, owner=owner, key=session_key)
-            
+            lookupfiles.update_lookup_table(filename=temp_file_name, lookup_file=lookup_name, namespace=namespace, owner=owner, key=session_key)
     
     def get_or_make_sheet_if_necessary(self, google_spread_sheet, worksheet_name, rows=100, cols=20):
         """

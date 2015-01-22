@@ -104,21 +104,20 @@ class TestLookupImport(SplunkGoogleDriveTestCase):
         
         # Check the results    
         self.assertTrue(os.path.exists(created_file_path), "Lookup file did not get created")
-        print 'File imported successfully, size=%r, path=%r' % (os.path.getsize(created_file_path), created_file_path)
+        #print 'File imported successfully, size=%r, path=%r' % (os.path.getsize(created_file_path), created_file_path)
         self.assertEquals(os.path.getsize(created_file_path), 72, "Lookup file was not populated correctly")
         
     def test_import_by_lookup_name(self):
         session_key = splunk.auth.getSessionKey(username='admin', password='changeme')
         lookup_name = "test_case_import.csv"
         namespace = "search"
-        owner = "admin"
+        owner = "nobody"
         
         # Import the file
-        #self.google_lookup_sync.import_to_lookup_file(lookup_name, namespace, owner, google_spread_sheet_name, worksheet_name, session_key, create_if_non_existent)
         self.google_lookup_sync.import_to_lookup_file(lookup_name, namespace, owner, "test_case_import", "data", session_key, create_if_non_existent=False)
         
         # Check the file
-        destination_full_path = lookupfiles.get_lookup_table_location(lookup_name, namespace, owner, session_key, True)
+        destination_full_path = lookupfiles.SplunkLookupTableFile.get(lookupfiles.SplunkLookupTableFile.build_id(lookup_name, namespace, owner), sessionKey=session_key).path
         
         self.assertTrue(os.path.exists(destination_full_path), "File to import was not created properly")
         

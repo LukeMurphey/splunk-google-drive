@@ -1,0 +1,86 @@
+<endpoint name="data/inputs/google_spreadsheet_import">
+	<header>Import Google spreadsheets into Splunk and use them as lookups</header>
+	
+	<breadcrumb>
+	    <parent hidecurrent="False">datainputstats</parent>
+	    <name>Google Spreadsheet</name>
+	</breadcrumb>
+	
+	<elements>
+		<element name="inputFields" type="fieldset">
+	      <view name="list"/>
+	      <view name="edit"/>
+	      <view name="create"/>
+	      <elements>
+	      	
+	        <element name="name" label="Name">
+	          <view name="list"/>
+	          <view name="create"/>
+	        </element>
+	        
+	        <element name="interval" type="textfield" label="Interval">
+	          <view name="edit"/>
+	          <view name="create"/>
+	          <key name="exampleText">The interval defining how often to perform the import; can include time units (e.g. 15m for 15 minutes, 8h for 8 hours)</key>
+	        </element>
+	       	
+	        <element name="lookup_name" type="select" label="Lookup">
+	        	<view name="list"/>
+	            <view name="edit"/>
+	            <view name="create"/>
+	            <key name="exampleText">The lookup to import the data into</key>
+	            <key name="dynamicOptions" type="dict">
+	            	<key name="keyName">title</key>
+	                <key name="keyValue">title</key>
+	                <key name="splunkSource">/data/lookup-table-files</key>
+	            </key>
+	        </element>
+	      </elements>
+	  	</element>
+	  	
+	  	
+		<element name="spreadsheetFields" type="fieldset">
+		  <key name="legend">Spreadsheet</key>
+	      <view name="list"/>
+	      <view name="edit"/>
+	      <view name="create"/>
+	      <elements>
+	        <element name="spreadsheet" type="textfield" label="Spreadsheet Title">
+	          <view name="list"/>
+	          <view name="edit"/>
+	          <view name="create"/>
+	          <key name="exampleText">The title of the Google spreadsheet</key>
+	        </element>
+	        
+	        <element name="worksheet" type="textfield" label="Worksheet Name">
+	          <view name="list"/>
+	          <view name="edit"/>
+	          <view name="create"/>
+	          <key name="exampleText">The name of the worksheet (e.g. "Sheet1") in the Google Spreadsheet</key>
+	        </element>
+		  </elements>
+		</element>
+	  	
+		<element name="authFields" type="fieldset">
+		  <key name="legend">Authentication</key>
+	      <view name="edit"/>
+	      <view name="create"/>
+	      <elements>
+	      
+	        <element name="google_login" type="textfield" label="Login Name">
+	          <view name="edit"/>
+	          <view name="create"/>
+	          <key name="exampleText">The login to use when authenticating to Google</key>
+	        </element>
+	        
+	        <element name="google_password" type="password" label="Password">
+	          <view name="edit"/>
+	          <view name="create"/>
+	          <key name="exampleText">The password to use for authenticating to Google</key>
+	        </element>
+	      </elements>
+	  	</element>
+	  	
+      </elements>
+       
+</endpoint>
