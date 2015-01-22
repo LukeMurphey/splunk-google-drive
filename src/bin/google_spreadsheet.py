@@ -25,11 +25,11 @@ def setup_logger():
     Setup a logger.
     """
     
-    logger = logging.getLogger('google_spreadsheet_import_modular_input')
+    logger = logging.getLogger('google_spreadsheet_modular_input')
     logger.propagate = False # Prevent the log messages from being duplicated in the python.log file
     logger.setLevel(logging.INFO)
     
-    file_handler = handlers.RotatingFileHandler(make_splunkhome_path(['var', 'log', 'splunk', 'google_spreadsheet_import_modular_input.log']), maxBytes=25000000, backupCount=5)
+    file_handler = handlers.RotatingFileHandler(make_splunkhome_path(['var', 'log', 'splunk', 'google_spreadsheet_modular_input.log']), maxBytes=25000000, backupCount=5)
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     file_handler.setFormatter(formatter)
     
@@ -221,7 +221,7 @@ class GoogleSpreadsheets(ModularInput):
         google_worksheet         = cleaned_params["worksheet"]
         
         timeout                  = self.timeout
-        sourcetype               = cleaned_params.get("sourcetype", "google_spreadsheet_import")
+        sourcetype               = cleaned_params.get("sourcetype", "google_spreadsheet")
         host                     = cleaned_params.get("host", None)
         index                    = cleaned_params.get("index", "default")
         conf_stanza              = cleaned_params.get("configuration", None)
@@ -251,8 +251,8 @@ class GoogleSpreadsheets(ModularInput):
             
 if __name__ == '__main__':
     try:
-        google_spreadsheet_import = GoogleSpreadsheets()
-        google_spreadsheet_import.execute()
+        google_spreadsheet = GoogleSpreadsheets()
+        google_spreadsheet.execute()
         sys.exit(0)
     except Exception as e:
         logger.exception("Unhandled exception was caught, this may be due to a defect in the script") # This logs general exceptions that would have been unhandled otherwise (such as coding errors)
