@@ -90,10 +90,9 @@ def update_lookup_table(filename, lookup_file, namespace, owner, key):
     
     '''
     try:
-        # When usinOwner passed in should be nobody, otherwise
         id_val = SplunkLookupTableFile.build_id(lookup_file, namespace, owner)
         lookup_table_file = SplunkLookupTableFile.get(id_val, sessionKey=key)
-        lookup_table_file.manager()._put_args(id_val, {'eai:data': filename})
+        lookup_table_file.manager()._put_args(id=id_val, postargs={'eai:data': filename}, sessionKey=key)
         
         return True
     except splunk.ResourceNotFound as e:
