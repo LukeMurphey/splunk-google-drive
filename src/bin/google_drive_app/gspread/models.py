@@ -472,6 +472,21 @@ class Worksheet(object):
                                           'col': str(cell.col),
                                           'inputValue': unicode(cell.value)})
         return feed
+    
+    def clear_all_cells(self):
+        """Clears existing cells in the worksheet.
+        """
+        
+        cells = self._fetch_cells()
+        any_cleared = False
+        
+        for cell in cells:
+            if cell.value is not None and cell.value != "":
+                cell.value = ""
+                any_cleared = True
+        
+        if any_cleared == True:
+            self.update_cells(cells)
 
     def update_cells(self, cell_list):
         """Updates cells in batch.
