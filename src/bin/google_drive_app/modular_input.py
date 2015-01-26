@@ -726,7 +726,7 @@ class ModularInput():
         out -- The stream to write the message to (defaults to standard output)
         """
         
-        self.logger.info("Modular input: scheme requested")
+        self.logger.debug("Modular input: scheme requested")
         out.write(self.get_scheme())
         
         return True
@@ -1103,7 +1103,7 @@ class ModularInput():
             
         #self.logger.info("Calculated non-deviated last_ran=%r from previous_last_ran=%r", last_ran_derived, last_ran)
         return last_ran_derived
-             
+    
     def save_checkpoint_data(self, checkpoint_dir, stanza, data):
         """
         Save the checkpoint state.
@@ -1245,14 +1245,14 @@ class ModularInput():
         """
         
         try:
-            self.logger.info("Execute called")
+            self.logger.debug("Execute called")
             
             if len(sys.argv) > 1:
                 if sys.argv[1] == "--scheme":
                     self.do_scheme(out_stream)
                     
                 elif sys.argv[1] == "--validate-arguments":
-                    self.logger.info("Modular input: validate arguments called")
+                    self.logger.debug("Modular input: validate arguments called")
                     
                     # Exit with a code of -1 if validation failed
                     if self.do_validation() == False:
@@ -1265,11 +1265,11 @@ class ModularInput():
                 # Run the modular input
                 self.do_run(in_stream, log_exception_and_continue=True)
                 
-            self.logger.info("Execution completed successfully")
+            self.logger.debug("Execution completed successfully")
             
         except Exception as e:
             
-            self.logger.error("Execution failed: %s", ( traceback.format_exc() ))
+            self.logger.exception("Execution failed")
             
             # Make sure to grab any exceptions so that we can print a valid error message
             self.print_error(str(e), out_stream)
