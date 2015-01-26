@@ -61,7 +61,7 @@
 	        <element name="only_if_changed" type="checkbox" label="Import only if the file changed">
 	          <view name="edit"/>
 	          <view name="create"/>
-	          <key name="exampleText">The interval defining how often to perform the import; can include time units (e.g. 15m for 15 minutes, 8h for 8 hours)</key>
+	          <key name="exampleText">If checked, the import will only be performed after the worksheet in Google was modified</key>
 	        </element>
 	        
 	      </elements>
