@@ -6,6 +6,7 @@ spreadsheet = <value>
 
 operation = <value>
 * The operation to perform (should be either "import" or "export")
+* Valid values are: import, export
 
 worksheet = <value>
 * The worksheet to import the data from
@@ -21,3 +22,8 @@ google_password = <value>
 
 interval = <value>
 * Indicates how often to perform the import
+
+only_if_changed = <value>
+* If true, then the import will only happen if the Google Worksheet has changed since it was last imported
+* Valid values are: 0, 1, false, true
+* Defaults to true

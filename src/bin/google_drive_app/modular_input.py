@@ -3,7 +3,6 @@ from logging import handlers
 from xml.dom.minidom import Document
 import traceback
 import xml.dom
-import xml.sax.saxutils
 import sys
 import re
 import time
@@ -13,29 +12,6 @@ import json
 from urlparse import urlparse
 
 from splunk.appserver.mrsparkle.lib.util import make_splunkhome_path
-
-def setup_logger():
-    """
-    Setup a logger.
-    """
-    
-    logger = logging.getLogger('python_modular_input')
-    logger.propagate = False # Prevent the log messages from being duplicated in the python.log file
-    logger.setLevel(logging.DEBUG)
-    
-    file_handler = handlers.RotatingFileHandler(make_splunkhome_path(['var', 'log', 'splunk', 'python_modular_input.log']), maxBytes=25000000, backupCount=5)
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    file_handler.setFormatter(formatter)
-    
-    logger.addHandler(file_handler)
-    
-    return logger
-
-# Make a logger unless it already exists
-try:
-    logger
-except NameError:
-    logger = setup_logger()
 
 class FieldValidationException(Exception):
     pass
@@ -673,7 +649,7 @@ class ModularInput():
         out.write(output)
         out.flush()
     
-    def __init__(self, scheme_args, args=None, sleep_interval=5):
+    def __init__(self, scheme_args, args=None, sleep_interval=5, logger_name='python_modular_input'):
         """
         Set up the modular input.
         
@@ -682,6 +658,7 @@ class ModularInput():
         description -- A description of the input (e.g. "Get data from a database")
         args -- A list of Field instances for validating the arguments
         sleep_interval -- How often to sleep between runs
+        logger_name -- The logger name to append to the logger
         """
         
         # Setup defaults
@@ -709,6 +686,14 @@ class ModularInput():
             
         # Create the document used for sending events to Splunk through
         self.document = self._create_document()
+        
+        # Check and save the logger name
+        self._logger = None
+        
+        if logger_name is None or len(logger_name) == 0:
+            raise Exception("Logger name cannot be empty")
+        
+        self.logger_name = logger_name
                     
     def addArg(self, arg):
         """
@@ -741,10 +726,34 @@ class ModularInput():
         out -- The stream to write the message to (defaults to standard output)
         """
         
-        logger.info("Modular input: scheme requested")
+        self.logger.info("Modular input: scheme requested")
         out.write(self.get_scheme())
         
         return True
+        
+    @property
+    def logger(self):
+        
+        # Make a logger unless it already exists
+        if self._logger is not None:
+            return self._logger
+        
+        logger = logging.getLogger(self.logger_name)
+        logger.propagate = False # Prevent the log messages from being duplicated in the python.log file
+        logger.setLevel(logging.DEBUG)
+        
+        file_handler = handlers.RotatingFileHandler(make_splunkhome_path(['var', 'log', 'splunk', self.logger_name + '.log']), maxBytes=25000000, backupCount=5)
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        file_handler.setFormatter(formatter)
+        
+        logger.addHandler(file_handler)
+        
+        self._logger = logger
+        return self._logger
+    
+    @logger.setter
+    def logger(self, logger):
+        self._logger = logger
         
     def get_scheme(self):
         """
@@ -1058,9 +1067,8 @@ class ModularInput():
         finally:
             if fp is not None:
                 fp.close()
-             
-    @classmethod
-    def get_non_deviated_last_run(cls, last_ran, interval, stanza):
+    
+    def get_non_deviated_last_run(self, last_ran, interval, stanza):
         """
         This method will return a last_run time that doesn't carry over the processing time.
         If you used the current time and the script took 5 seconds to run, then next run will actually be 5 seconds after it should have been.
@@ -1091,13 +1099,12 @@ class ModularInput():
             # To catch up, we'll set it to the current time
             last_ran_derived = time.time()
             
-            logger.info("Previous run was too far in the past (gap=%r) and thus some executions of the input have been missed (stanza=%s)", last_ran_derived-last_ran, stanza)
+            self.logger.info("Previous run was too far in the past (gap=%r) and thus some executions of the input have been missed (stanza=%s)", last_ran_derived-last_ran, stanza)
             
-        #logger.info("Calculated non-deviated last_ran=%r from previous_last_ran=%r", last_ran_derived, last_ran)
+        #self.logger.info("Calculated non-deviated last_ran=%r from previous_last_ran=%r", last_ran_derived, last_ran)
         return last_ran_derived
              
-    @classmethod   
-    def save_checkpoint_data(cls, checkpoint_dir, stanza, data):
+    def save_checkpoint_data(self, checkpoint_dir, stanza, data):
         """
         Save the checkpoint state.
         
@@ -1110,12 +1117,12 @@ class ModularInput():
         fp = None
         
         try:
-            fp = open( cls.get_file_path(checkpoint_dir, stanza), 'w' )
+            fp = open( self.get_file_path(checkpoint_dir, stanza), 'w' )
             
             json.dump(data, fp)
             
         except Exception:
-            logger.exception("Failed to save checkpoint directory") 
+            self.logger.exception("Failed to save checkpoint directory") 
             
         finally:
             if fp is not None:
@@ -1159,7 +1166,7 @@ class ModularInput():
                         input_config)
                 except FieldValidationException as e:
                     if log_exception_and_continue:
-                        logger.error("The input stanza '%s' is invalid: %s" % (stanza, str(e)))
+                        self.logger.error("The input stanza '%s' is invalid: %s" % (stanza, str(e)))
                     else:
                         raise e
                     
@@ -1238,14 +1245,14 @@ class ModularInput():
         """
         
         try:
-            logger.info("Execute called")
+            self.logger.info("Execute called")
             
             if len(sys.argv) > 1:
                 if sys.argv[1] == "--scheme":
                     self.do_scheme(out_stream)
                     
                 elif sys.argv[1] == "--validate-arguments":
-                    logger.info("Modular input: validate arguments called")
+                    self.logger.info("Modular input: validate arguments called")
                     
                     # Exit with a code of -1 if validation failed
                     if self.do_validation() == False:
@@ -1258,11 +1265,11 @@ class ModularInput():
                 # Run the modular input
                 self.do_run(in_stream, log_exception_and_continue=True)
                 
-            logger.info("Execution completed successfully")
+            self.logger.info("Execution completed successfully")
             
         except Exception as e:
             
-            logger.error("Execution failed: %s", ( traceback.format_exc() ))
+            self.logger.error("Execution failed: %s", ( traceback.format_exc() ))
             
             # Make sure to grab any exceptions so that we can print a valid error message
             self.print_error(str(e), out_stream)

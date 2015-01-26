@@ -31,9 +31,9 @@ class GoogleLookupSync(object):
         APPEND    = 2
         
     class Operation:
-        IMPORT      = 1
-        EXPORT      = 2
-        SYNCHRONIZE = 3
+        IMPORT      = "import"
+        EXPORT      = "export"
+        SYNCHRONIZE = "synchronize"
         
     def __init__(self, login=None, password=None, oauth2credentials=None, logger=None):
         
@@ -50,7 +50,7 @@ class GoogleLookupSync(object):
         self.get_logger()
         
         #SPL-95681
-        self.update_lookup_with_rest = False
+        self.update_lookup_with_rest = True
         
     def authenticate_by_password(self, login, password):
         """
@@ -101,19 +101,12 @@ class GoogleLookupSync(object):
         # Try to open the file by the title
         if title is not None:
             google_spread_sheet = self.gspread_client.open(title)
-            
-            
+        
         # If we don't have the sheet yet, try using the key
         if google_spread_sheet is None and key is not None:
             self.gspread_client.open_by_key(key)
         
         return google_spread_sheet
-    
-    def get_lookup_file_row_count(self, lookup_file_path):
-        pass
-    
-    def copy_file(self, src, dst):
-        pass
     
     def set_logger(self, logger):
         self.logger = logger
@@ -164,6 +157,114 @@ class GoogleLookupSync(object):
         
         self.import_to_lookup_file(transform.filename, namespace, owner, google_spread_sheet_name, worksheet_name, session_key, create_if_non_existent)
     
+    def export_lookup_file(self, lookup_name, namespace, owner, google_spread_sheet_name, worksheet_name, session_key):
+        """
+        Export the spreadsheet from the given lookup file to Google.
+        
+        Args:
+          lookup_name (str): The name of the lookup file to write (not the full path, just the stanza name)
+          namespace (str): 
+          owner (str): 
+          google_spread_sheet_name (str): 
+          worksheet_name (str): 
+          session_key (str): 
+        """
+        
+        splunk_lookup_table = lookupfiles.SplunkLookupTableFile.get(lookupfiles.SplunkLookupTableFile.build_id(lookup_name, namespace, owner), sessionKey=session_key)
+
+        destination_full_path = splunk_lookup_table.path
+        
+        if namespace is None and splunk_lookup_table is not None:
+            namespace = splunk_lookup_table.namespace
+            
+        if owner is None:
+            owner = "nobody"
+        
+        if destination_full_path is None:
+            raise Exception("Lookup file to export into does not exist")
+        
+        return self.export_lookup_file_full_path(destination_full_path, namespace, owner, google_spread_sheet_name, worksheet_name, session_key, lookup_name=lookup_name)
+    
+    def get_worksheet_updated_date(self, google_spread_sheet_name, worksheet_name):
+        """
+       Get the date that the worksheet was last updated.
+        
+        Args:
+          google_spread_sheet_name (str): 
+          worksheet_name (str): 
+        """
+        
+        try:
+            google_spread_sheet = self.open_google_spreadsheet(google_spread_sheet_name)
+            worksheet = google_spread_sheet.worksheet(worksheet_name)
+            return worksheet.updated
+        
+        except gspread.WorksheetNotFound:
+            return None
+    
+    def export_lookup_file_full_path(self, lookup_full_path, namespace, owner, google_spread_sheet_name, worksheet_name, session_key, lookup_name=None):
+        """
+        Export the spreadsheet from the given lookup file to Google.
+        
+        Args:
+          lookup_full_path (str): The full path of the file to export
+          namespace (str): 
+          owner (str): 
+          google_spread_sheet_name (str): 
+          worksheet_name (str): 
+          session_key (str):
+          lookup_name (str): The name of the lookup file to export (not the full path, just the stanza name). This is necessary to use Splunk's safe method of copying.
+        """
+        
+        # Open the spreadsheet
+        google_spread_sheet = self.open_google_spreadsheet(google_spread_sheet_name)
+        
+        # Delete the worksheet since we will be re-creating it
+        try:
+            worksheet = google_spread_sheet.worksheet(worksheet_name)
+            worksheet.clear_all_cells()
+            #google_spread_sheet.del_worksheet(worksheet)
+        except gspread.WorksheetNotFound:
+            pass #Spreadsheet did not exist. That's ok, we will make it.
+        
+        # Create the worksheet
+        google_work_sheet = self.get_or_make_sheet_if_necessary(google_spread_sheet, worksheet_name)
+        
+        # Open the lookup file and export it
+        with open(lookup_full_path, 'r') as file_handle:
+            
+            csv_reader = csv.reader(file_handle)
+            row_number = 1
+            
+            # Export each row
+            for row in csv_reader:
+                col_number = 1
+                
+                # Might want to batch this here (for better performance)
+                # google_work_sheet.insert_row
+                
+                # Add a row
+                #google_work_sheet.append_row(row)
+                
+                # Export each cell in the row
+                for value in row:
+                    
+                    # Update the cells value
+                    google_work_sheet.update_cell(row_number, col_number, value)
+                    
+                    # Increment the column number so we remember where we are
+                    col_number = col_number + 1
+                
+                # Increment the row number so we remember where we are
+                row_number = row_number + 1
+        
+        # Log the result
+        self.get_logger().info('Lookup exported successfully, user=%s, namespace=%s, lookup_file=%s', owner, namespace, lookup_name)
+    
+        # Get the new updated date
+        worksheet = google_spread_sheet.worksheet(worksheet_name)
+        return worksheet.updated
+    
     def import_to_lookup_file(self, lookup_name, namespace, owner, google_spread_sheet_name, worksheet_name, session_key, create_if_non_existent=False):
         """
         Import the spreadsheet from Google to the given lookup file.
@@ -188,8 +289,6 @@ class GoogleLookupSync(object):
         if owner is None:
             owner = "nobody"
         
-        self.get_logger().info("Lookup file path=%s", destination_full_path)
-        
         if destination_full_path is None and not create_if_non_existent:
             raise Exception("Lookup file to import into does not exist")
         
@@ -197,7 +296,7 @@ class GoogleLookupSync(object):
             # TODO handle user-based lookups
             destination_full_path = make_splunkhome_path(['etc', 'apps', namespace, 'lookups', lookup_name])
         
-        self.import_to_lookup_file_full_path(destination_full_path, namespace, owner, google_spread_sheet_name, worksheet_name, session_key, create_if_non_existent, lookup_name=lookup_name)
+        return self.import_to_lookup_file_full_path(destination_full_path, namespace, owner, google_spread_sheet_name, worksheet_name, session_key, create_if_non_existent, lookup_name=lookup_name)
         
     def import_to_lookup_file_full_path(self, destination_full_path, namespace, owner, google_spread_sheet_name, worksheet_name, session_key, create_if_non_existent=False, lookup_name=None):
         """
@@ -258,8 +357,12 @@ class GoogleLookupSync(object):
             else:
                 shutil.move(temp_file_name, destination_full_path)
                 
-            self.get_logger().info('Lookup created successfully, user=%s, namespace=%s, lookup_file=%s', owner, namespace, lookup_name)
-            
+            # Log the result
+            if not lookup_file_exists:
+                self.get_logger().info('Lookup created successfully, user=%s, namespace=%s, lookup_file=%s', owner, namespace, lookup_name)
+            else:
+                self.get_logger().info('Lookup updated successfully, user=%s, namespace=%s, lookup_file=%s', owner, namespace, lookup_name)
+    
             # If the file is new, then make sure that the list is reloaded so that the editors notice the change
             lookupfiles.SplunkLookupTableFile.reload()
             
@@ -274,11 +377,14 @@ class GoogleLookupSync(object):
                 # Get the namespace from the lookup file entry if we don't know it already
                 namespace = lookupfiles.SplunkLookupTableFile.get(lookupfiles.SplunkLookupTableFile.build_id(lookup_name, None, owner), sessionKey=session_key).namespace
                 
-            
-            #self.get_logger().info("filename=%s, lookup_file=%s, namespace=%s, owner=%s, key=%s", temp_file_name, lookup_name, namespace, owner, session_key)
-            
             # Persist the changes from the temporary file
             lookupfiles.update_lookup_table(filename=temp_file_name, lookup_file=lookup_name, namespace=namespace, owner=owner, key=session_key)
+    
+            self.get_logger().info('Lookup updated successfully, user=%s, namespace=%s, lookup_file=%s', owner, namespace, lookup_name)
+    
+        # Get the new updated date
+        worksheet = google_spread_sheet.worksheet(worksheet_name)
+        return worksheet.updated
     
     def get_or_make_sheet_if_necessary(self, google_spread_sheet, worksheet_name, rows=100, cols=20):
         """

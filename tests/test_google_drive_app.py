@@ -49,7 +49,84 @@ class SplunkGoogleDriveTestCase(unittest.TestCase):
     def setUp(self):
         self.google_lookup_sync = self.get_google_lookup_sync_instance()
 
-class TestLookupImport(SplunkGoogleDriveTestCase):
+class TestLookupExport(SplunkGoogleDriveTestCase):
+    
+    def test_export_by_full_lookup_path(self):
+        
+        # Clear the file first
+        self.clear_exported_file("test_case_export", "data")
+        
+        session_key = splunk.auth.getSessionKey(username='admin', password='changeme')
+        namespace = "search"
+        owner = "nobody"
+        lookup_name = "test_case_import.csv"
+        created_file_path = None
+        
+        google_spreadsheet_name = "test_case_export"
+        google_worksheet_name = "data"
+        
+        splunk_lookup_table = lookupfiles.SplunkLookupTableFile.get(lookupfiles.SplunkLookupTableFile.build_id(lookup_name, namespace, owner), sessionKey=session_key)
+        lookup_full_path = splunk_lookup_table.path
+        
+        # Export the file
+        self.google_lookup_sync.export_lookup_file_full_path(lookup_full_path, namespace, owner, google_spreadsheet_name, google_worksheet_name, session_key)
+        
+        # Now check the file
+        google_spread_sheet = self.google_lookup_sync.open_google_spreadsheet(google_spreadsheet_name)
+        worksheet = google_spread_sheet.worksheet(google_worksheet_name)
+        
+        print "worksheet.version=%r, worksheet.updated=%r," % (worksheet.version, worksheet.updated)
+        
+        # Check the columns
+        self.assertEquals(worksheet.acell("A1").value, "name")
+        self.assertEquals(worksheet.acell("B1").value, "value")
+        
+        # Check some of the rows
+        self.assertEquals(worksheet.acell("A2").value, "one")
+        self.assertEquals(worksheet.acell("B2").value, "1")
+        self.assertEquals(worksheet.acell("A6").value, "five")
+        self.assertEquals(worksheet.acell("B6").value, "5")
+        
+    def clear_exported_file(self, google_spreadsheet_name="test_case_export", google_worksheet_name="data"):
+        
+        google_spreadsheet = self.google_lookup_sync.open_google_spreadsheet(google_spreadsheet_name)
+        worksheet = google_spreadsheet.worksheet(google_worksheet_name)
+        
+        worksheet.clear_all_cells()
+        
+    def test_export_by_lookup_name(self):
+        
+        session_key = splunk.auth.getSessionKey(username='admin', password='changeme')
+        lookup_name = "test_case_import.csv"
+        namespace = "search"
+        owner = "nobody"
+        
+        self.clear_exported_file("test_case_export", "data")
+        
+        # Export the file
+        self.google_lookup_sync.export_lookup_file(lookup_name, namespace, owner, "test_case_export", "data", session_key)
+        
+        # Now check the file
+        google_spread_sheet = self.google_lookup_sync.open_google_spreadsheet("test_case_export")
+        worksheet = google_spread_sheet.worksheet("data")
+        
+        print "worksheet.version=%r, worksheet.updated=%r," % (worksheet.version, worksheet.updated)
+
+        # Check the columns
+        self.assertEquals(worksheet.acell("A1").value, "name")
+        self.assertEquals(worksheet.acell("B1").value, "value")
+        
+        # Check some of the rows
+        self.assertEquals(worksheet.acell("A2").value, "one")
+        self.assertEquals(worksheet.acell("B2").value, "1")
+        self.assertEquals(worksheet.acell("A6").value, "five")
+        self.assertEquals(worksheet.acell("B6").value, "5")
+        
+class TestGoogleSync(SplunkGoogleDriveTestCase):
+    
+    def test_get_worksheet_updated_date(self):
+        self.google_lookup_sync.get_worksheet_updated_date("test_case_import", "data")
+        
 
     def test_no_auth_creds(self):
         
@@ -88,6 +165,8 @@ class TestLookupImport(SplunkGoogleDriveTestCase):
         # Now delete it for future tests
         google_spread_sheet.del_worksheet(worksheet)
         
+class TestLookupImport(SplunkGoogleDriveTestCase):
+        
     def test_import_by_full_lookup_path(self):
         
         session_key = splunk.auth.getSessionKey(username='admin', password='changeme')
@@ -102,10 +181,10 @@ class TestLookupImport(SplunkGoogleDriveTestCase):
             # Import the file
             self.google_lookup_sync.import_to_lookup_file_full_path(created_file_path, namespace, owner, "test_case_import", "data", session_key, create_if_non_existent=True)
         
-        # Check the results    
+        # Check the results
         self.assertTrue(os.path.exists(created_file_path), "Lookup file did not get created")
         #print 'File imported successfully, size=%r, path=%r' % (os.path.getsize(created_file_path), created_file_path)
-        self.assertEquals(os.path.getsize(created_file_path), 72, "Lookup file was not populated correctly")
+        self.assertEquals(os.path.getsize(created_file_path), 45, "Lookup file was not populated correctly (is %i bytes)" % (os.path.getsize(created_file_path)))
         
     def test_import_by_lookup_name(self):
         session_key = splunk.auth.getSessionKey(username='admin', password='changeme')
@@ -125,5 +204,7 @@ if __name__ == "__main__":
     loader = unittest.TestLoader()
     suites = []
     suites.append(loader.loadTestsFromTestCase(TestLookupImport))
+    suites.append(loader.loadTestsFromTestCase(TestLookupExport))
+    suites.append(loader.loadTestsFromTestCase(TestGoogleSync))
     
     unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(suites))
