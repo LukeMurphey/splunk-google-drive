@@ -188,13 +188,12 @@ class GoogleSpreadsheets(ModularInput):
             with Timer() as timer:
                 google_lookup_sync = GoogleLookupSync(google_login, google_password, logger=self.logger)
                 
-                self.logger.info("spreadsheet_date_of_last_import=%s", spreadsheet_date_of_last_import)
                 # Make sure that the worksheet changed. If it hasn't don't don't bother importing.
                 if only_import_if_changed and spreadsheet_date_of_last_import is not None:
                     last_updated = google_lookup_sync.get_worksheet_updated_date(spreadsheet_title, worksheet_name)
-                    self.logger.info("last_updated=%r", last_updated)
+                    
                     if last_updated == spreadsheet_date_of_last_import:
-                        self.logger.info("Worksheet has not changed since last import, no action necessary, last_updated=%r", last_updated)
+                        self.logger.info("Worksheet has not changed since last import, no action necessary, last_updated=%s", last_updated)
                         return last_updated
                 
                 last_updated = google_lookup_sync.import_to_lookup_file(lookup_name, None, None, spreadsheet_title, worksheet_name, session_key, create_if_non_existent=False)
