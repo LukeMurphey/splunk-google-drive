@@ -194,9 +194,11 @@
          ================================= -->
     <target name="restart_splunk_web" description="Restart Splunk">
         <exec executable="${value.deploy.splunk_home}/bin/splunk">
-            <arg line="restart" />
-            <arg line="splunkweb" />
-            <arg line="--accept-license" />
+		    <arg line="restart" />
+		    <arg line="splunkweb" />
+		    <arg line="--accept-license" />
+		    <arg line="-auth" />
+		    <arg line="admin:changeme" />
         </exec>
     </target>
 	
