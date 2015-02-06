@@ -184,7 +184,7 @@ class TestLookupImport(SplunkGoogleDriveTestCase):
         # Check the results
         self.assertTrue(os.path.exists(created_file_path), "Lookup file did not get created")
         #print 'File imported successfully, size=%r, path=%r' % (os.path.getsize(created_file_path), created_file_path)
-        self.assertEquals(os.path.getsize(created_file_path), 45, "Lookup file was not populated correctly (is %i bytes)" % (os.path.getsize(created_file_path)))
+        self.assertGreaterEqual(os.path.getsize(created_file_path), 40, "Lookup file was not populated correctly (is %i bytes)" % (os.path.getsize(created_file_path)))
         
     def test_import_by_lookup_name(self):
         session_key = splunk.auth.getSessionKey(username='admin', password='changeme')
