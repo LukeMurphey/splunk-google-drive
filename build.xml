@@ -41,22 +41,26 @@
          ================================= -->
 	<target name="get_build_number">
 		
-   		<!-- Run git to get the revison number and date -->
-	    <exec failonerror="true" executable="git" outputproperty="value.build.number"> <!-- Fail on error is set to true in order to prevent a bad build number from being included -->
-			<arg value="log"/>
-	    	<arg value="-1"/>
-			<arg value="--pretty=format:%ct"/>
-	    	<arg value="--abbrev-commit"/>
-			<arg value="${user.dir}"/>
-	    </exec>
+		<macrodef name="get_build_info">
+			<attribute name="path" default="${user.dir}" />
+			<attribute name="format" default="ct" />
+			<attribute name="outputproperty" />
+			
+			<sequential>
+			    <exec failonerror="true" executable="git" outputproperty="@{outputproperty}"> <!-- Fail on error is set to true in order to prevent a bad build number from being included -->
+					<arg value="log"/>
+			    	<arg value="-1"/>
+					<arg value="--pretty=format:%@{format}"/>
+			    	<arg value="--abbrev-commit"/>
+					<arg value="@{path}"/>
+			    </exec>
+			</sequential>
+			
+		</macrodef>
 		
-	    <exec failonerror="true" executable="git" outputproperty="value.build.date"> <!-- Fail on error is set to true in order to prevent a bad build number from being included -->
-			<arg value="log"/>
-	    	<arg value="-1"/>
-			<arg value="--pretty=format:%cD"/>
-	    	<arg value="--abbrev-commit"/>
-			<arg value="${user.dir}"/>
-	    </exec>
+   		<!-- Run git to get the revison number and date -->
+		<get_build_info outputproperty="value.build.number" />
+		<get_build_info format="cD" outputproperty="value.build.date" />
 		
 		<echo>Revision number is: ${value.build.number} (${value.build.date})</echo>
 		
