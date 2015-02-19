@@ -193,7 +193,7 @@ class GoogleSpreadsheets(ModularInput):
                     last_updated = google_lookup_sync.get_worksheet_updated_date(spreadsheet_title, worksheet_name)
                     
                     if last_updated == spreadsheet_date_of_last_import:
-                        self.logger.info("Worksheet has not changed since last import, no action necessary, last_updated=%s", last_updated)
+                        self.logger.info('Worksheet has not changed since last import, no action necessary, last_updated=%s, spreadsheet="%s", worksheet="%s"', last_updated, spreadsheet_title, worksheet_name)
                         return last_updated
                 
                 last_updated = google_lookup_sync.import_to_lookup_file(lookup_name, None, None, spreadsheet_title, worksheet_name, session_key, create_if_non_existent=False)
