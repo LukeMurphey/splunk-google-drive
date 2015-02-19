@@ -69,6 +69,12 @@ class GoogleSpreadsheets(ModularInput):
         ModularInput.__init__( self, scheme_args, args, logger_name='google_spreadsheet_modular_input' )
     
     def resolve_proxy_type(self, proxy_type):
+        """
+        Resolve the proxy type to use from the given string.
+        
+        Argument:
+        proxy_type -- A string description of the proxy type to use
+        """
         
         # Make sure the proxy string is not none
         if proxy_type is None:
@@ -94,18 +100,18 @@ class GoogleSpreadsheets(ModularInput):
         Export the lookup from Splunk into a Google Drive Spreadsheet.
         
         Argument:
-        spreadsheet_title -- 
-        worksheet_name -- 
-        lookup_name -- 
-        google_login
-        google_password -- 
-        oauth2_token -- 
+        spreadsheet_title -- The title of the spreadsheet to export
+        worksheet_name -- The name of the worksheet within the spreadsheet to export
+        lookup_name -- The name of the lookup file to export
+        google_login -- The Google login name
+        google_password -- The Google password to use
+        oauth2_token -- An oauth2 token (if not using password authentication)
         proxy_type -- The type of the proxy server (must be one of: socks4, socks5, http)
         proxy_server -- The proxy server to use.
         proxy_port -- The port on the proxy server to use.
         proxy_user -- The proxy server to use.
         proxy_password -- The port on the proxy server to use.
-        session_key -- 
+        session_key -- A session key to Splunkd
         """
         
         #self.logger.debug('Performing import, url="%s"', url.geturl())
@@ -149,18 +155,18 @@ class GoogleSpreadsheets(ModularInput):
         Import the given Google Drive Spreadsheet as a file into Splunk as a lookup file.
         
         Argument:
-        spreadsheet_title -- 
-        worksheet_name -- 
-        lookup_name -- 
-        google_login
-        google_password -- 
-        oauth2_token -- 
+        spreadsheet_title -- The title of the spreadsheet to import
+        worksheet_name -- The name of the worksheet within the spreadsheet to import
+        lookup_name -- The name of the lookup file to export
+        google_login -- The Google login name
+        google_password -- The Google password to use
+        oauth2_token -- An oauth2 token (if not using password authentication)
         proxy_type -- The type of the proxy server (must be one of: socks4, socks5, http)
         proxy_server -- The proxy server to use.
         proxy_port -- The port on the proxy server to use.
         proxy_user -- The proxy server to use.
         proxy_password -- The port on the proxy server to use.
-        session_key -- 
+        session_key -- A session key to Splunkd
         spreadsheet_date_of_last_import -- Updated date of the last spreadsheet that was successfully imported.
         only_import_if_changed -- Only perform the import if the lookup file was changed since the last time it was imported.
         """
@@ -251,6 +257,14 @@ class GoogleSpreadsheets(ModularInput):
         return web_proxy_config.proxy_type, web_proxy_config.proxy_server, web_proxy_config.proxy_port, web_proxy_config.proxy_user, web_proxy_config.proxy_password
         
     def get_date_last_imported(self, checkpoint_dir, stanza):
+        """
+        Get the date that the worksheet was last updated.
+        
+        Arguments:
+        checkpoint_dir -- The directory where checkpoints ought to be saved and stored
+        stanza -- The stanza of the input being used
+        """
+        
         data = self.get_checkpoint_data(checkpoint_dir, stanza)
         
         if data is not None:
