@@ -48,7 +48,7 @@
 	        	<view name="list"/>
 	            <view name="edit"/>
 	            <view name="create"/>
-	            <key name="exampleText">The lookup to import the data into</key>
+	            <key name="exampleText">The lookup to import the data into or export it from</key>
 	            <key name="dynamicOptions" type="dict">
 		            <key name="prefixOptions" type="list">
 		            </key>
