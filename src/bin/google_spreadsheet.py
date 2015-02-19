@@ -136,7 +136,7 @@ class GoogleSpreadsheets(ModularInput):
             # Perform the request
             with Timer() as timer:
                 google_lookup_sync = GoogleLookupSync(google_login, google_password, logger=self.logger)
-                last_updated = google_lookup_sync.export_to_lookup_file(lookup_name, None, None, spreadsheet_title, worksheet_name, session_key)
+                last_updated = google_lookup_sync.export_lookup_file(lookup_name, None, None, spreadsheet_title, worksheet_name, session_key)
                 
             self.logger.info("Export completed, time=%r", timer.msecs)
             
