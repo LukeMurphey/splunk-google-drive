@@ -4,6 +4,7 @@ import sys
 import os
 import time
 import re
+import json
 import splunk.auth
 
 sys.path.append( os.path.join("..", "src", "bin") )
@@ -24,7 +25,7 @@ class SplunkGoogleDriveTestCase(unittest.TestCase):
             
             return value
     
-    def get_login_and_password(self):
+    def get_credentials(self):
         
         login = None
         password = None
@@ -34,17 +35,20 @@ class SplunkGoogleDriveTestCase(unittest.TestCase):
         props = props_fh.read()
         #props_fh.readlines()
         
-        # Find the login and password entries
-        login = self.get_property("value[.]test[.]google_login[ ]*[=](.*)", props, "Google login was not specified")
-        password = self.get_property("value[.]test[.]google_password[ ]*[=](.*)", props, "Google password was not specified")
+        # Find the path of the key
+        credentials_path = self.get_property("value[.]test[.]oauth2_credentials[ ]*[=](.*)", props, "Google credentials were not specified")
+
+        # Load the key file
+        json_key = json.load(open(os.path.join("..", credentials_path)))
         
-        return login, password
+        # Return the credentials
+        return json_key['client_email'], json_key['private_key']
     
     def get_google_lookup_sync_instance(self):
         
-        login, password = self.get_login_and_password()
+        client_email, private_key = self.get_credentials()
         
-        return GoogleLookupSync(login, password)
+        return GoogleLookupSync(client_email, private_key)
     
     def setUp(self):
         self.google_lookup_sync = self.get_google_lookup_sync_instance()

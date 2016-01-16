@@ -4,8 +4,9 @@ This module includes classes necessary to export and import lookups to Google sp
 
 from google_drive_app import GoogleLookupSync
 
-login = 'someone@gmail.com'
-password = 'super_secret'
+json_key = json.load(open('my_google_auth_file.json'))
+
+json_key['client_email'], json_key['private_key']
 
 google_lookup_sync = GoogleLookupSync(login, password)
 
@@ -19,6 +20,7 @@ import shutil
 import logging
 import lookupfiles
 import gspread
+from oauth2client.client import SignedJwtAssertionCredentials
 from splunk.appserver.mrsparkle.lib.util import make_splunkhome_path
 
 class GoogleLookupSync(object):
@@ -35,15 +37,9 @@ class GoogleLookupSync(object):
         EXPORT      = "export"
         SYNCHRONIZE = "synchronize"
         
-    def __init__(self, login=None, password=None, oauth2credentials=None, logger=None):
+    def __init__(self, client_email=None, private_key=None, logger=None):
         
-        self.gspread_client = None
-                
-        if oauth2credentials is not None:
-            self.authenticate_by_oauth2()
-        else:
-            self.authenticate_by_password(login, password)
-            
+        self.gspread_client = self.make_client(private_key, client_email)
         self.logger = logger
         
         # Initialize a logger. This will cause it be initialized if one is not set yet.
@@ -52,32 +48,24 @@ class GoogleLookupSync(object):
         #SPL-95681
         self.update_lookup_with_rest = True
         
-    def authenticate_by_password(self, login, password):
+    def make_client(self, private_key, client_email):
         """
         Authenticate to Google and initialize a gspread client.
         
         Args:
-          login (str): The login to use for authenticating to Google
-          password (str): The password to use for authenticating to Google
+          private_key (str): The login to use for authenticating to Google
+          client_email (str): The password to use for authenticating to Google
         """
         
         # Make sure a login name and password were provided
-        if login is None or password is None:
-            raise ValueError("Neither a login name nor a password was provided")
+        if private_key is None or client_email is None:
+            raise ValueError("Both a email address and a private key must be provided")
         
-        self.gspread_client = gspread.login(login, password)
-        return self.gspread_client
+        scope = ['https://spreadsheets.google.com/feeds']
+        credentials = SignedJwtAssertionCredentials(client_email, private_key.encode(), scope)
         
-    def authenticate_by_oauth2(self, oauth2credentials):
-        """
-        Authenticate to Google and initialize a gspread client using OAuth2
-        
-        Args:
-          oauth2credentials (OAuth2Credentials): The oauth2credentials to use for authenticating.
-        """
-        
-        self.gspread_client = gspread.authorize(oauth2credentials)
-        return self.gspread_client
+        return gspread.authorize(credentials)
+
     
     def open_google_spreadsheet(self, title=None, key=None):
         """
