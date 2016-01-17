@@ -1,13 +1,15 @@
 
 from splunk.appserver.mrsparkle.lib.util import make_splunkhome_path
 from splunk.models.base import SplunkAppObjModel
-from google_drive_app.modular_input import Field, ModularInput, IntegerField, DurationField, BooleanField
+from google_drive_app.modular_input import Field, ModularInput, DurationField, BooleanField
 from splunk.models.field import Field as ModelField
 from splunk.models.field import IntField as ModelIntField 
 
 import sys
 import time
 import splunk
+import json
+import os
 
 import httplib2
 from httplib2 import socks
@@ -56,8 +58,8 @@ class GoogleSpreadsheets(ModularInput):
         args = [
                 Field("spreadsheet", "Spreadsheet Title", "The title of the spreadsheet", empty_allowed=False),
                 Field("worksheet", "Worksheet Name", 'The name of the worksheet (e.g. "Sheet1")', empty_allowed=False),
-                Field("google_login", "Google Login", 'The login to use when authenticating to Google', empty_allowed=False),
-                Field("google_password", "Google Password", 'The password to use when authenticating to Google. You will need to use an app-specific password here if you are using two-factor authentication.', empty_allowed=False),
+                Field("service_account_key_file", "OAuth2 Service Account Key File", 'The service account key with the credentials necessary for authenticating to Google', empty_allowed=False, required_on_create=False, required_on_edit=False),
+                
                 BooleanField("only_if_changed", "Import file only if changed", "If set to true, then the import will only be done if the Google worksheet was changed.", empty_allowed=False),
                 
                 Field("operation", "Operation", "The operation to perform (import into Splunk or export to Google Drive)", empty_allowed=False),
@@ -95,7 +97,7 @@ class GoogleSpreadsheets(ModularInput):
             self.logger.warn("Proxy type is not recognized: %s", proxy_type)
             return None
         
-    def export_file(self, spreadsheet_title, worksheet_name, lookup_name, google_login=None, google_password=None, oauth2_token=None, proxy_type=None, proxy_server=None, proxy_port=None, proxy_user=None, proxy_password=None, session_key=None):
+    def export_file(self, spreadsheet_title, worksheet_name, lookup_name, client_email=None, private_key=None, proxy_type=None, proxy_server=None, proxy_port=None, proxy_user=None, proxy_password=None, session_key=None):
         """
         Export the lookup from Splunk into a Google Drive Spreadsheet.
         
@@ -103,9 +105,8 @@ class GoogleSpreadsheets(ModularInput):
         spreadsheet_title -- The title of the spreadsheet to export
         worksheet_name -- The name of the worksheet within the spreadsheet to export
         lookup_name -- The name of the lookup file to export
-        google_login -- The Google login name
-        google_password -- The Google password to use
-        oauth2_token -- An oauth2 token (if not using password authentication)
+        private_key -- The private key from the oauth2 token
+        client_email -- The email from the oauth2 token
         proxy_type -- The type of the proxy server (must be one of: socks4, socks5, http)
         proxy_server -- The proxy server to use.
         proxy_port -- The port on the proxy server to use.
@@ -135,7 +136,7 @@ class GoogleSpreadsheets(ModularInput):
             
             # Perform the request
             with Timer() as timer:
-                google_lookup_sync = GoogleLookupSync(google_login, google_password, logger=self.logger)
+                google_lookup_sync = GoogleLookupSync(client_email, private_key, logger=self.logger)
                 last_updated = google_lookup_sync.export_lookup_file(lookup_name, None, None, spreadsheet_title, worksheet_name, session_key)
                 
             self.logger.info("Export completed, time=%r", timer.msecs)
@@ -150,7 +151,7 @@ class GoogleSpreadsheets(ModularInput):
         except Exception:
             self.logger.exception("A general exception was thrown when executing the export")
     
-    def import_file(self, spreadsheet_title, worksheet_name, lookup_name, google_login=None, google_password=None, oauth2_token=None, proxy_type=None, proxy_server=None, proxy_port=None, proxy_user=None, proxy_password=None, session_key=None, spreadsheet_date_of_last_import=None, only_import_if_changed=False):
+    def import_file(self, spreadsheet_title, worksheet_name, lookup_name, client_email=None, private_key=None, proxy_type=None, proxy_server=None, proxy_port=None, proxy_user=None, proxy_password=None, session_key=None, spreadsheet_date_of_last_import=None, only_import_if_changed=False):
         """
         Import the given Google Drive Spreadsheet as a file into Splunk as a lookup file.
         
@@ -158,9 +159,8 @@ class GoogleSpreadsheets(ModularInput):
         spreadsheet_title -- The title of the spreadsheet to import
         worksheet_name -- The name of the worksheet within the spreadsheet to import
         lookup_name -- The name of the lookup file to export
-        google_login -- The Google login name
-        google_password -- The Google password to use
-        oauth2_token -- An oauth2 token (if not using password authentication)
+        private_key -- The private key from the oauth2 token
+        client_email -- The email from the oauth2 token
         proxy_type -- The type of the proxy server (must be one of: socks4, socks5, http)
         proxy_server -- The proxy server to use.
         proxy_port -- The port on the proxy server to use.
@@ -192,7 +192,7 @@ class GoogleSpreadsheets(ModularInput):
             
             # Perform the request
             with Timer() as timer:
-                google_lookup_sync = GoogleLookupSync(google_login, google_password, logger=self.logger)
+                google_lookup_sync = GoogleLookupSync(client_email, private_key, logger=self.logger)
                 
                 # Make sure that the worksheet changed. If it hasn't don't don't bother importing.
                 if only_import_if_changed and spreadsheet_date_of_last_import is not None:
@@ -270,19 +270,26 @@ class GoogleSpreadsheets(ModularInput):
         if data is not None:
             return data.get('google_worksheet_updated', None)
         
+    def get_credentials_from_oauth_file(self, service_account_key_file):
+        
+        # Load the key file
+        json_key = json.load(open(make_splunkhome_path(['etc', 'apps', 'google_drive', 'service_account_keys', os.path.basename(service_account_key_file)])))
+        
+        # Return the credentials
+        return json_key['client_email'], json_key['private_key']
+        
     def run(self, stanza, cleaned_params, input_config):
         
         # Make the parameters
-        interval               = cleaned_params["interval"]
-        lookup_name            = cleaned_params["lookup_name"]
+        interval                 = cleaned_params["interval"]
+        lookup_name              = cleaned_params["lookup_name"]
         
-        google_login           = cleaned_params["google_login"]
-        google_password        = cleaned_params["google_password"]
-        google_spreadsheet     = cleaned_params["spreadsheet"]
-        google_worksheet       = cleaned_params["worksheet"]
-        only_if_changed        = cleaned_params.get("only_if_changed", False)
+        service_account_key_file = cleaned_params["service_account_key_file"]
+        google_spreadsheet       = cleaned_params["spreadsheet"]
+        google_worksheet         = cleaned_params["worksheet"]
+        only_if_changed          = cleaned_params.get("only_if_changed", False)
         
-        operation              = cleaned_params.get("operation", None)
+        operation                = cleaned_params.get("operation", None)
         
         if self.needs_another_run(input_config.checkpoint_dir, stanza, interval):
             
@@ -298,15 +305,22 @@ class GoogleSpreadsheets(ModularInput):
             
             date_worksheet_last_updated = self.get_date_last_imported(input_config.checkpoint_dir, stanza)
             
+            # Get the credentials from the key
+            try:
+                client_email, private_key = self.get_credentials_from_oauth_file(service_account_key_file)
+            except Exception as e:
+                self.logger.exception("Unable to obtain the credentials from the ")
+            
+            # Perform the operation accordingly
             if operation is not None and operation.lower() == GoogleLookupSync.Operation.IMPORT:
                 
                 # Perform the import
-                date_worksheet_last_updated = self.import_file(google_spreadsheet, google_worksheet, lookup_name, google_login=google_login, google_password=google_password, proxy_type=proxy_type, proxy_server=proxy_server, proxy_port=proxy_port, proxy_user=proxy_user, proxy_password=proxy_password, session_key=input_config.session_key, only_import_if_changed=only_if_changed, spreadsheet_date_of_last_import=date_worksheet_last_updated)
+                date_worksheet_last_updated = self.import_file(google_spreadsheet, google_worksheet, lookup_name, private_key=private_key, client_email=client_email, proxy_type=proxy_type, proxy_server=proxy_server, proxy_port=proxy_port, proxy_user=proxy_user, proxy_password=proxy_password, session_key=input_config.session_key, only_import_if_changed=only_if_changed, spreadsheet_date_of_last_import=date_worksheet_last_updated)
             
             elif operation is not None and operation.lower() == GoogleLookupSync.Operation.EXPORT:
                 
                 # Perform the export
-                date_worksheet_last_updated = self.export_file(google_spreadsheet, google_worksheet, lookup_name, google_login=google_login, google_password=google_password, proxy_type=proxy_type, proxy_server=proxy_server, proxy_port=proxy_port, proxy_user=proxy_user, proxy_password=proxy_password, session_key=input_config.session_key)
+                date_worksheet_last_updated = self.export_file(google_spreadsheet, google_worksheet, lookup_name, private_key=private_key, client_email=client_email, proxy_type=proxy_type, proxy_server=proxy_server, proxy_port=proxy_port, proxy_user=proxy_user, proxy_password=proxy_password, session_key=input_config.session_key)
             
             else:
                 self.logger.warning("No valid operation specified for the stanza=%s", stanza)

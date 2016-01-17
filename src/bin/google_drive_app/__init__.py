@@ -14,14 +14,23 @@ google_lookup_sync.import_to_lookup_file(lookup_name='some_lookup.csv', namespac
 
 """
 
-import os
+
 import csv
+
 import shutil
 import logging
 import lookupfiles
+
+import os
+import sys
+from splunk.appserver.mrsparkle.lib.util import make_splunkhome_path
+
+sys.path.append(make_splunkhome_path(['etc', 'apps', 'google_drive', 'bin', 'google_drive_app']))
+sys.path.append(make_splunkhome_path(['etc', 'apps', 'google_drive', 'bin', 'google_drive_app', 'oauth2client']))
+
 import gspread
 from oauth2client.client import SignedJwtAssertionCredentials
-from splunk.appserver.mrsparkle.lib.util import make_splunkhome_path
+
 
 class GoogleLookupSync(object):
     """

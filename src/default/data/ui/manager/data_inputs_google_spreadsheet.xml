@@ -55,6 +55,9 @@
 	            	<key name="keyName">title</key>
 	                <key name="keyValue">title</key>
 	                <key name="splunkSource">/data/lookup-table-files</key>
+	                <key name="splunkSourceParams" type="dict">
+			           <key name="count">-1</key>
+			        </key>
 	            </key>
 	        </element>
 	        
@@ -90,26 +93,21 @@
 		  </elements>
 		</element>
 	  	
+	  	<!-- 
 		<element name="authFields" type="fieldset">
 		  <key name="legend">Authentication</key>
 	      <view name="edit"/>
 	      <view name="create"/>
 	      <elements>
 	      
-	        <element name="google_login" type="textfield" label="Login Name">
+	        <element name="service_account_key_file" type="textfield" label="Service Account Key File">
 	          <view name="edit"/>
 	          <view name="create"/>
-	          <key name="exampleText">The login to use when authenticating to Google</key>
-	        </element>
-	        
-	        <element name="google_password" type="password" label="Password">
-	          <view name="edit"/>
-	          <view name="create"/>
-	          <key name="exampleText">The password to use for authenticating to Google</key>
+	          <key name="exampleText">The service account key file to use when authenticating to Google</key>
 	        </element>
 	      </elements>
 	  	</element>
-	  	
+	  	 -->
       </elements>
        
 </endpoint>

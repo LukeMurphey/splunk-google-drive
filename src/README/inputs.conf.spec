@@ -14,11 +14,10 @@ worksheet = <value>
 lookup_name = <value>
 * The name of the lookup to export the data to
 
-google_login = <value>
-* The login to use when authenticating to Google
-
-google_password = <value>
-* The password to use when authenticating to Google
+service_account_key_file = <value>
+* The file name of the service account key to use when authenticating to Google
+* The file must exist in the "service_account_keys" directory of the app (e.g. "/etc/apps/google_drive/service_account_keys")
+* See the following for information on how to generate a service account key: http://gspread.readthedocs.org/en/latest/oauth2.html
 
 interval = <value>
 * Indicates how often to perform the import
