@@ -3,7 +3,6 @@ import os
 import sys
 import json
 import cherrypy
-import urllib
 import re
 import base64
 
