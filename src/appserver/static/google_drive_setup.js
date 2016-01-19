@@ -21,6 +21,8 @@ require(['jquery','underscore','splunkjs/mvc', 'jquery', 'splunkjs/mvc/simplespl
 	        	
 	        	this.filename = this.options.filename;
 	        	this.service_account_email = this.options.service_account_email;
+	        	
+	        	this.setupDragDropHandlers();
 	        },
 	        
 	        /**
@@ -29,7 +31,7 @@ require(['jquery','underscore','splunkjs/mvc', 'jquery', 'splunkjs/mvc/simplespl
 	        setupDragDropHandlers: function(){
 	        	
 	        	// Setup a handler for handling files dropped on the import dialog
-	        	drop_zone2 = document.getElementById('import-file-modal');
+	        	drop_zone2 = document.getElementById('drop-zone');
 	        	this.setupDragDropHandlerOnElement(drop_zone2);
 	        	
 	        },
@@ -73,6 +75,9 @@ require(['jquery','underscore','splunkjs/mvc', 'jquery', 'splunkjs/mvc/simplespl
 		             async: false,
 		             
 		             success: function(result) {
+		            	 this.service_account_email = result['service_account_email'];
+		            	 this.filename = result['filename'];
+		            	 this._render();
 		            	 console.info("Successfully added a service account key file");
 		            	 promise.resolve(file_name);
 		             }.bind(this),
@@ -210,14 +215,14 @@ require(['jquery','underscore','splunkjs/mvc', 'jquery', 'splunkjs/mvc/simplespl
 	        	if(this.service_account_email != null){
 	        		$('.show_when_no_key').hide();
 	        		$('.show_when_with_key').show();
-	        		$('#service_account_email').text(this.service_account_email);
+	        		$('#service_account_email').val(this.service_account_email);
 	        	}
 	        	
 	        	// Show the parts of the view that show that a key has _not_ been loaded
 	        	else{
 	        		$('.show_when_no_key').show();
 	        		$('.show_when_with_key').hide();
-	        		$('#service_account_email').text("");
+	        		$('#service_account_email').val("");
 	        	}
 	        	
 	        }

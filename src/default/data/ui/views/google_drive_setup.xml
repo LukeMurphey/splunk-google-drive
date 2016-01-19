@@ -5,27 +5,51 @@
       <html>
       	<div id="google_drive_setup_view">
 			<h2>Google Drive Setup</h2>
-			
+						
 			<div class="show_when_no_key">
 				<p>
 				This app requires a Google service account in order to authenticate with Google Drive.
 				</p>
-				<p>
-				You do have a key defined. Please import a key in order to use this app.
-				</p>
+
+				<div action="#" class="form form-complex">
+					<div class="control-group">
+						<label for="#" class="control-label">Service Account Client Email</label>
+						<div class="controls controls-block">
+							<input type="text" disabled="true" />
+							<span class="control-feedback">No account key is defined</span>
+						</div>
+					</div>
+	            </div>
+
 			</div>
 			
 			<div class="show_when_with_key">
-				A service account key is defined. The service account is associated with the following email address:
-				<div id="service_account_email"></div>
+				<p>
+				This app requires a Google service account in order to authenticate with Google Drive.
+				</p>
+				
+				<div action="#" class="form form-complex">
+					<div class="control-group">
+						<label for="#" class="control-label">Service Account Client Email</label>
+						<div class="controls controls-block">
+							<input id="service_account_email" type="text" disabled="true" />
+							<span class="control-feedback">A service account key is defined.</span>
+						</div>
+					</div>
+	            </div>
+			</div>
+			
+			<div id="drop-zone">
 			</div>
 			
 		    <input type="file" id="import-file-input" />
 		    <button class="btn active btn-primary" id="choose-import-file">Select file to import</button>
-		        
+		    
+		    <!-- 
 		    <div class="drag-and-drop-tip">
 		    	<strong>Tip:</strong> You can drag and drop a service account key file this dialog to import it directly
 		    </div>
+		     -->
 	    </div>
       </html>
     </panel>
