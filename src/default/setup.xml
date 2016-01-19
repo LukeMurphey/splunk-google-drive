@@ -1,0 +1,3 @@
+<setup>
+  <block task="google_drive_setup" type="redirect" />
+</setup>
