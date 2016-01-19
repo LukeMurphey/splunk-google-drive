@@ -17,6 +17,7 @@ from splunk.util import normalizeBoolean as normBool
 from splunk.appserver.mrsparkle.lib.decorators import expose_page
 from splunk.appserver.mrsparkle.lib.routes import route
 import splunk.entity as entity
+from splunk.rest import simpleRequest
 
 def setup_logger(level):
     """
@@ -64,6 +65,22 @@ class ServiceAccountKeys(controllers.BaseController):
         cherrypy.response.status = 400
         return self.render_json(output, set_mime='text/plain')
  
+    def setAppAsConfigured(self):
+
+        session_key = cherrypy.session.get('sessionKey')
+        
+        postargs = {
+                    'output_mode': 'json',
+                    'configured' : 'true'
+        }
+        
+        response, _ = simpleRequest('/services/apps/local/google_drive', sessionKey=session_key, method='POST', postargs=postargs, raiseAllErrors=False)
+
+        if response.status == 200:
+            return True
+        else:
+            return False
+ 
     def setKeyForDefaultInput(self, file_name):
         
         entity_entry = self.getDefaultGoogleDriveInputEntity()
@@ -74,6 +91,8 @@ class ServiceAccountKeys(controllers.BaseController):
         entity_entry.namespace = ServiceAccountKeys.DEFAULT_NAMESPACE
         entity_entry.owner = ServiceAccountKeys.DEFAULT_OWNER
         entity.setEntity(entity_entry, sessionKey=session_key)
+        
+        self.setAppAsConfigured()
  
     def getClientEmailFromKeyFile(self, file_name):
         
