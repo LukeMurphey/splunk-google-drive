@@ -10,17 +10,23 @@ This app provides a mechanism for importing and exporting data to/from Google dr
 Configuring Splunk
 ================================================
 
-Step one: generate OAuth2 service account key
+----------------------------------------------------------------
+Step one: configure the app with a service account
+----------------------------------------------------------------
 
-1) Head to Google Developers Console (https://console.developers.google.com/project) and create a new project (or select the one you have.)
-2) Under “API & auth”, in the API enable “Drive API”.
-3) Go to “Credentials” and choose “New Credentials > Service Account Key”. This will generate a JSON key file.
+You will need to create an OAuth2 service account key from Google and assign the service account permission to read and/or write to the files accordingly. See the following for specific instructions:
 
-Step two: upload servie account key to Splunk
+     http://lukemurphey.net/projects/splunk-google-docs/wiki/How_to_setup_app
 
-You will need to perform the app setup in order to define the service account key that you want to use. The app will ask you to set it up the first time you run it. When you come to this page, upload the key to Splunk and press save.
+----------------------------------------------------------------
+Step two: give the service account permission to the spreadsheet
+----------------------------------------------------------------
 
+You will need to give the service account permission to read and/or write to the spreadsheet. See http://lukemurphey.net/projects/splunk-google-docs/wiki/How_to_setup_app.
+
+----------------------------------------------------------------
 Step three: create input
+----------------------------------------------------------------
 
 This app exposes a new input type that can be configured in the Splunk Manager. To configure it, create a new input in the Manager under Data inputs » Google Spreadsheet.
 
