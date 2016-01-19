@@ -309,7 +309,7 @@ class GoogleSpreadsheets(ModularInput):
             try:
                 client_email, private_key = self.get_credentials_from_oauth_file(service_account_key_file)
             except Exception as e:
-                self.logger.exception("Unable to obtain the credentials from the ")
+                self.logger.exception("Unable to obtain the credentials from the OAuth file")
             
             # Perform the operation accordingly
             if operation is not None and operation.lower() == GoogleLookupSync.Operation.IMPORT:
