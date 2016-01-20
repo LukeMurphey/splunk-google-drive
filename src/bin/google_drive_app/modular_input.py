@@ -547,25 +547,31 @@ class ModularInput():
         # Return the content as a string WITHOUT the XML header.
         return doc.documentElement.toxml()
     
-    def escape_spaces(self, s):
+    def escape_spaces(self, s, encapsulate_in_double_spaces=False):
         """
         If the string contains spaces, then add double quotes around the string. This is useful when outputting fields and values to Splunk since a space will cause Splunk to not recognize the entire value.
         
         Arguments:
         s -- A string to escape.
+        encapsulate_in_double_spaces -- If true, the value will have double-spaces added around it.
         """
         
         # Make sure the input is a string
         if s is not None:
             s = str(s)
         
-        if s is not None and " " in s:
+        # Escape the spaces within the string (will need KV_MODE = auto_escaped for this to work)
+        if s is not None:
+            s = s.replace('"', '\\"')
+            s = s.replace("'", "\\'")
+        
+        if s is not None and (" " in s or encapsulate_in_double_spaces):
             return '"' + s + '"'
         
         else:
             return s
     
-    def create_event_string(self, data_dict, stanza, sourcetype, source, index, host=None, unbroken=False, close=False ):
+    def create_event_string(self, data_dict, stanza, sourcetype, source, index, host=None, unbroken=False, close=False, encapsulate_value_in_double_spaces=False):
         """
         Create a string representing the event.
         
@@ -577,6 +583,7 @@ class ModularInput():
         index -- The index to send the event to
         unbroken -- 
         close -- 
+        encapsulate_value_in_double_spaces -- If true, the value will have double-spaces added around it.
         """
         
         # Make the content of the event
@@ -594,7 +601,7 @@ class ModularInput():
             
             # Write out each value
             for v in values:
-                v_escaped = self.escape_spaces(v)
+                v_escaped = self.escape_spaces(v, encapsulate_in_double_spaces=encapsulate_value_in_double_spaces)
                 
                 
                 if len(data_str) > 0:
@@ -621,14 +628,14 @@ class ModularInput():
         event = self._create_event(self.document, 
                                    params=event_dict,
                                    stanza=stanza,
-                                   unbroken=False,
-                                   close=False)
+                                   unbroken=unbroken,
+                                   close=close)
         
         # If using unbroken events, the last event must have been 
         # added with a "</done>" tag.
         return self._print_event(self.document, event)
         
-    def output_event(self, data_dict, stanza, index=None, sourcetype=None, source=None, host=None, unbroken=False, close=False, out=sys.stdout ):
+    def output_event(self, data_dict, stanza, index=None, sourcetype=None, source=None, host=None, unbroken=False, close=False, out=sys.stdout, encapsulate_value_in_double_spaces=False ):
         """
         Output the given even so that Splunk can see it.
         
@@ -642,9 +649,10 @@ class ModularInput():
         close -- 
         out -- The stream to send the event to (defaults to standard output)
         host -- The host
+        encapsulate_value_in_double_spaces -- If true, the value will have double-spaces added around it. This is useful in cases where the app contains props & transforms that require the value to have double-spaces.
         """
         
-        output = self.create_event_string(data_dict, stanza, sourcetype, source, index, host, unbroken, close)
+        output = self.create_event_string(data_dict, stanza, sourcetype, source, index, host, unbroken, close, encapsulate_value_in_double_spaces=encapsulate_value_in_double_spaces)
         
         out.write(output)
         out.flush()
@@ -740,7 +748,7 @@ class ModularInput():
         
         logger = logging.getLogger(self.logger_name)
         logger.propagate = False # Prevent the log messages from being duplicated in the python.log file
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(logging.INFO)
         
         file_handler = handlers.RotatingFileHandler(make_splunkhome_path(['var', 'log', 'splunk', self.logger_name + '.log']), maxBytes=25000000, backupCount=5)
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
@@ -1059,6 +1067,12 @@ class ModularInput():
             return checkpoint_dict
         
         except IOError:
+            if throw_errors:
+                raise
+            else:
+                return None
+            
+        except ValueError:
             if throw_errors:
                 raise
             else:
