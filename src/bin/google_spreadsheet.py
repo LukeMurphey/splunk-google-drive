@@ -1,7 +1,7 @@
 
 from splunk.appserver.mrsparkle.lib.util import make_splunkhome_path
 from splunk.models.base import SplunkAppObjModel
-from google_drive_app.modular_input import Field, ModularInput, DurationField, BooleanField
+from google_drive_app.modular_input import Field, ModularInput, DurationField, BooleanField, DeprecatedField
 from splunk.models.field import Field as ModelField
 from splunk.models.field import IntField as ModelIntField 
 
@@ -65,7 +65,10 @@ class GoogleSpreadsheets(ModularInput):
                 Field("operation", "Operation", "The operation to perform (import into Splunk or export to Google Drive)", empty_allowed=False),
                 Field("lookup_name", "Lookup File Name", 'The name of the lookup file to import the content into', empty_allowed=False),
                 
-                DurationField("interval", "Interval", "The interval defining how often to import the file; can include time units (e.g. 15m for 15 minutes, 8h for 8 hours)", empty_allowed=False)
+                DurationField("interval", "Interval", "The interval defining how often to import the file; can include time units (e.g. 15m for 15 minutes, 8h for 8 hours)", empty_allowed=False),
+                
+                DeprecatedField("google_login", "Google Login", 'The login to use when authenticating to Google'),
+                DeprecatedField("google_password", "Google Password", 'The password to use when authenticating to Google. You will need to use an app-specific password here if you are using two-factor authentication.')
                 ]
         
         ModularInput.__init__( self, scheme_args, args, logger_name='google_spreadsheet_modular_input' )
@@ -331,16 +334,20 @@ class GoogleSpreadsheets(ModularInput):
             # Save the checkpoint so that we remember when we last 
             self.save_checkpoint(input_config.checkpoint_dir, stanza, self.get_non_deviated_last_run(last_ran, interval, stanza),  date_worksheet_last_updated)
         
-            
+# Try to run the input
 if __name__ == '__main__':
+    
     try:
         google_spreadsheet = GoogleSpreadsheets()
         google_spreadsheet.execute()
         sys.exit(0)
     except Exception as e:
         
-        # This logs general exceptions that would have been unhandled otherwise (such as coding errors)
-        if google_spreadsheet is not None:
-            google_spreadsheet.logger.exception("Unhandled exception was caught, this may be due to a defect in the script")
+        try:
+            # This logs general exceptions that would have been unhandled otherwise (such as coding errors)
+            if google_spreadsheet is not None:
+                google_spreadsheet.logger.exception("Unhandled exception was caught, this may be due to a defect in the script")
+        except NameError:
+            pass # google_spreadsheet was not instantiated yet
         
         raise e

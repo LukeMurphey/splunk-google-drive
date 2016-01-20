@@ -26,3 +26,10 @@ only_if_changed = <value>
 * If true, then the import will only happen if the Google Worksheet has changed since it was last imported
 * Valid values are: 0, 1, false, true
 * Defaults to true
+
+# The following are deprecated (use the service account key from now on)
+google_login = <value>
+* DEPRECATED: do not use this since it is no longer supported and is ignored
+
+google_password = <value>
+* DEPRECATED: do not use this since it is no longer supported and is ignored
