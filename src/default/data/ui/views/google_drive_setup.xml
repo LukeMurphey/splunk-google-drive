@@ -11,7 +11,7 @@
 			</p>
 			
 			<p>
-				<a class="external" target="_blank" href="http://lukemurphey.net/projects/splunk-google-docs/wiki/How_to_setup_app">How to generate a service account key</a>.
+				<a class="external" target="_blank" href="http://lukemurphey.net/projects/splunk-google-docs/wiki/How_to_setup_app">Create a service account key</a> and upload it here to setup authentication.
 			</p>
 				
 			<div class="show_when_no_key">
