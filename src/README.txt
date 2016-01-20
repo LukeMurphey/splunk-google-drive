@@ -46,6 +46,15 @@ You can access the source-code and get technical details about the app at:
 
 
 
+
+================================================
+Known Issues
+================================================
+
+This app cannot be installed with the RADIUS Authentication app (https://splunkbase.splunk.com/app/981/) due to an incompatibility with the six library.
+
+
+
 ================================================
 Change History
 ================================================
