@@ -31,6 +31,8 @@ sys.path.append(make_splunkhome_path(['etc', 'apps', 'google_drive', 'bin', 'goo
 import gspread
 from oauth2client.client import SignedJwtAssertionCredentials
 
+class SpreadsheetInaccessible(Exception):
+    pass
 
 class GoogleLookupSync(object):
     """
@@ -90,20 +92,23 @@ class GoogleLookupSync(object):
           The Google spreadsheet object
         """
         
-        if title is None and key is None:
-            raise ValueError("You must supply either the title or the key of the sheet you want to open")
-        
-        google_spread_sheet = None
-        
-        # Try to open the file by the title
-        if title is not None:
-            google_spread_sheet = self.gspread_client.open(title)
-        
-        # If we don't have the sheet yet, try using the key
-        if google_spread_sheet is None and key is not None:
-            self.gspread_client.open_by_key(key)
-        
-        return google_spread_sheet
+        try:
+            if title is None and key is None:
+                raise ValueError("You must supply either the title or the key of the sheet you want to open")
+            
+            google_spread_sheet = None
+            
+            # Try to open the file by the title
+            if title is not None:
+                google_spread_sheet = self.gspread_client.open(title)
+            
+            # If we don't have the sheet yet, try using the key
+            if google_spread_sheet is None and key is not None:
+                self.gspread_client.open_by_key(key)
+            
+            return google_spread_sheet
+        except gspread.SpreadsheetNotFound:
+            raise SpreadsheetInaccessible()
     
     def set_logger(self, logger):
         self.logger = logger

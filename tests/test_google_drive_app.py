@@ -10,7 +10,7 @@ import splunk.auth
 sys.path.append( os.path.join("..", "src", "bin") )
 sys.path.append( os.path.join("..", "src", "bin", "google_drive_app") )
 
-from google_drive_app import GoogleLookupSync, gspread, lookupfiles
+from google_drive_app import GoogleLookupSync, SpreadsheetInaccessible, gspread, lookupfiles
 
 class SplunkGoogleDriveTestCase(unittest.TestCase):
     
@@ -147,6 +147,10 @@ class TestGoogleSync(SplunkGoogleDriveTestCase):
         
     def test_open_google_spreadsheet_by_key(self):
         self.google_lookup_sync.open_google_spreadsheet(key="12lGRqELJlj9osKD08ASKO9B6A2G2SqOtrvHh4OR4-sA")
+        
+    def test_open_google_spreadsheet_doesnt_exist(self):
+        self.assertRaises( SpreadsheetInaccessible, lambda: self.google_lookup_sync.open_google_spreadsheet(title="this_doesnt_exist") )
+        
  
     def test_get_or_make_sheet_if_necessary(self):
         
