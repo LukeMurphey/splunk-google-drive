@@ -50,16 +50,15 @@
 			</div>
 			
 			<div id="drop-zone">
+				<div class="inner-drop-zone-info">
+					<b style="margin:0">Drop key here</b> or
+					<div style="display:inline-block">
+						<a id="choose-import-file">choose file</a>
+					</div>
+				</div>
 			</div>
 			
-		    <input type="file" id="import-file-input" />
-		    <button class="btn active btn-primary" id="choose-import-file">Select file to import</button>
-		    
-		    <!-- 
-		    <div class="drag-and-drop-tip">
-		    	<strong>Tip:</strong> You can drag and drop a service account key file this dialog to import it directly
-		    </div>
-		     -->
+			<input type="file" id="import-file-input" />
 	    </div>
       </html>
     </panel>
