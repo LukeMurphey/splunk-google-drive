@@ -51,7 +51,8 @@ You can access the source-code and get technical details about the app at:
 Known Issues
 ================================================
 
-This app cannot be installed with the RADIUS Authentication app (https://splunkbase.splunk.com/app/981/) due to an incompatibility with the six library.
+* This app cannot be installed with the RADIUS Authentication app (https://splunkbase.splunk.com/app/981/) due to an incompatibility with the six library.
+* If you change the service account key, existing inputs will not recognize the new key until they are restarted. You can either disable and then re-enable each input or restart Splunk.
 
 
 
