@@ -64,3 +64,23 @@
 	background-color: red;
     color: white;
 }
+
+@keyframes highlight_green {
+  0% {
+    background-color: #7ec44c;
+  }
+  100% {
+    
+  }
+}
+
+.changed-success {
+    -moz-animation: highlight_green 2.5s;
+    -webkit-animation: highlight_green 2.5s;
+    -o-animation: highlight_green 2.5s;
+    animation: highlight_green 2.5s;
+}
+
+#box {
+   animation: changed_success 2s infinite;
+}

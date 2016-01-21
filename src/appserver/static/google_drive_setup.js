@@ -54,6 +54,14 @@ require(['jquery','underscore','splunkjs/mvc', 'jquery', 'splunkjs/mvc/simplespl
 	        },
 	        
 	        /**
+	         * Set the inputs to indicate success
+	         */
+	        showSuccess: function () {
+	        	$("#service_account_email").removeClass("changed-success");
+	        	$("#service_account_email").addClass("changed-success");
+	        },
+	        
+	        /**
 	         * Upload the given file to Splunk
 	         */
 	        uploadFile: function (file, file_content) {
@@ -78,6 +86,7 @@ require(['jquery','underscore','splunkjs/mvc', 'jquery', 'splunkjs/mvc/simplespl
 		            	 this.service_account_email = result['service_account_email'];
 		            	 this.filename = result['filename'];
 		            	 this._render();
+		            	 this.showSuccess();
 		            	 console.info("Successfully added a service account key file");
 		            	 promise.resolve(file_name);
 		             }.bind(this),
