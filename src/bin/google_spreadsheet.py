@@ -219,6 +219,9 @@ class GoogleSpreadsheets(ModularInput):
             # This may be thrown if the user configured the proxy settings incorrectly
             self.logger.exception("An error occurred when attempting to communicate with the proxy")
         
+        except SpreadsheetInaccessible:
+            self.logger.warning("Unable to access the spreadsheet, make sure the service account has been granted access to this file; spreadsheet_title=%s, help_url=%s", spreadsheet_title, "http://lukemurphey.net/projects/splunk-google-docs/wiki/How_to_setup_app")
+        
         except Exception:
             self.logger.exception("A general exception was thrown when executing the import")
     
