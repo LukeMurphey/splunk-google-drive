@@ -93,7 +93,7 @@ class ServiceAccountKeys(controllers.BaseController):
         
         self.setAppAsConfigured()
  
-    def getClientEmailFromKeyFile(self, file_name):
+    def getInfoFromKeyFile(self, file_name):
         
         service_key_file_path = make_splunkhome_path(['etc', 'apps', 'google_drive', 'service_account_keys', file_name])
         service_key = None
@@ -102,14 +102,16 @@ class ServiceAccountKeys(controllers.BaseController):
             with open(service_key_file_path, 'r') as fh:
                 service_key = json.load(fh)
                 
-                if 'client_email' in service_key:
-                    return service_key['client_email']
+                client_email = service_key.get('client_email', None)
+                private_key_id = service_key.get('private_key_id', None)
+                
+                return client_email, private_key_id
                 
         except IOError:
             # File could not be loaded
-            return None
+            return None, None
             
-        return None
+        return None, None
         
     def getDefaultGoogleDriveInputEntity(self):
         session_key = cherrypy.session.get('sessionKey')
@@ -129,12 +131,13 @@ class ServiceAccountKeys(controllers.BaseController):
         if 'service_account_key_file' in default_password_entry:
             file_name = default_password_entry['service_account_key_file']
         
-            service_account_email = self.getClientEmailFromKeyFile(file_name)
+            service_account_email, private_key_id = self.getInfoFromKeyFile(file_name)
         
         # Return the information
         return self.render_json({
                                  'filename' : file_name,
-                                 'service_account_email' : service_account_email
+                                 'service_account_email' : service_account_email,
+                                 'private_key_id' : private_key_id
                                  })
  
     @expose_page(must_login=True, methods=['POST']) 
@@ -149,6 +152,7 @@ class ServiceAccountKeys(controllers.BaseController):
         
         # Parse the key and make sure it is valid
         service_account_email = None
+        private_key_id = None
         
         try:
             account_key = json.loads(file_contents_decoded)
@@ -157,9 +161,10 @@ class ServiceAccountKeys(controllers.BaseController):
             if 'client_email' not in account_key:
                 return self.render_error_json(_("The service account key did not include a client email address"))
             
-            # Get the email address
+            # Get the email address and key ID
             else:
                 service_account_email = account_key['client_email']
+                private_key_id = account_key.get('private_key_id', None)
             
         except ValueError as e:
             return self.render_error_json(_("The service account key filename is invalid"))
@@ -185,6 +190,7 @@ class ServiceAccountKeys(controllers.BaseController):
         # Return the information
         return self.render_json({
                                  'filename' : file_name,
+                                 'private_key_id' : private_key_id,
                                  'service_account_email' : service_account_email
                                  })
         

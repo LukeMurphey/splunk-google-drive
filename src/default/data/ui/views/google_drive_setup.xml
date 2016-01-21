@@ -18,6 +18,10 @@
 
 				<div action="#" class="form form-complex">
 					<div class="control-group">
+						<label for="" class="control-label">Key ID</label>
+						<div class="controls controls-block">
+							<input type="text" disabled="true" />
+						</div>
 						<label for="#" class="control-label">Service Account Client Email</label>
 						<div class="controls controls-block">
 							<input type="text" disabled="true" />
@@ -32,7 +36,11 @@
 	
 				<div action="#" class="form form-complex">
 					<div class="control-group">
-						<label for="#" class="control-label">Service Account Client Email</label>
+						<label for="private_key_id" class="control-label">Key ID</label>
+						<div class="controls controls-block">
+							<input id="private_key_id" type="text" disabled="true" />
+						</div>
+						<label for="service_account_email" class="control-label">Service Account Client Email</label>
 						<div class="controls controls-block">
 							<input id="service_account_email" type="text" disabled="true" />
 							<span class="control-feedback changed-success">A service account key is defined.</span>

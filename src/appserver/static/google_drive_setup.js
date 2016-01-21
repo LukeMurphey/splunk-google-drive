@@ -21,6 +21,10 @@ require(['jquery','underscore','splunkjs/mvc', 'jquery', 'splunkjs/mvc/simplespl
 	        	
 	        	this.filename = this.options.filename;
 	        	this.service_account_email = this.options.service_account_email;
+	        	this.private_key_id = this.options.private_key_id;
+	        	
+	        	// This keeps around a timeout ID that clears the changed classes so that the animations work
+	        	clearChangedClassesTimeoutID = null;
 	        	
 	        	this.setupDragDropHandlers();
 	        },
@@ -54,11 +58,28 @@ require(['jquery','underscore','splunkjs/mvc', 'jquery', 'splunkjs/mvc/simplespl
 	        },
 	        
 	        /**
-	         * Set the inputs to indicate success
+	         * Clear the classes that highlight changes to the UI.
+	         */
+	        clearChangedClasses: function(){
+       		 	$("#service_account_email").removeClass("changed-success");
+       		 	$("#private_key_id").removeClass("changed-success");
+	        },
+	        
+	        /**
+	         * Set the inputs to indicate success.
 	         */
 	        showSuccess: function () {
-	        	$("#service_account_email").removeClass("changed-success");
 	        	$("#service_account_email").addClass("changed-success");
+	        	$("#private_key_id").addClass("changed-success");
+	        	
+	        	// Clear the existing timeout so that we don't step on each other
+	        	if(this.clearChangedClassesTimeoutID){
+	        		window.clearTimeout(this.clearChangedClassesTimeoutID);
+	        		this.clearChangedClassesTimeoutID = null;
+	        	}
+	        	
+	        	// Make a timeout to clear the changed classes (otherwise, the CSS animation won't re-fire)
+	        	this.clearChangedClassesTimeoutID = window.setTimeout(this.clearChangedClasses.bind(this), 3000);
 	        },
 	        
 	        /**
@@ -83,10 +104,16 @@ require(['jquery','underscore','splunkjs/mvc', 'jquery', 'splunkjs/mvc/simplespl
 		             async: false,
 		             
 		             success: function(result) {
+		            	 
+		            	 // Save the information about the key
 		            	 this.service_account_email = result['service_account_email'];
+		            	 this.private_key_id = result['private_key_id'];
 		            	 this.filename = result['filename'];
+		            	 
+		            	 // Update the UI
 		            	 this._render();
 		            	 this.showSuccess();
+		            	 
 		            	 console.info("Successfully added a service account key file");
 		            	 promise.resolve(file_name);
 		             }.bind(this),
@@ -204,8 +231,13 @@ require(['jquery','underscore','splunkjs/mvc', 'jquery', 'splunkjs/mvc/simplespl
 		             url: uri,
 		             
 		             success: function(result) {
+		            	 
+		            	// Save the information about the key
 		            	 this.service_account_email = result['service_account_email'];
+		            	 this.private_key_id = result['private_key_id'];
 		            	 this.filename = result['filename'];
+		            	 
+		            	// Update the UI
 		            	 this._render();
 		             }.bind(this),
 		             
@@ -225,6 +257,7 @@ require(['jquery','underscore','splunkjs/mvc', 'jquery', 'splunkjs/mvc/simplespl
 	        		$('.show_when_no_key').hide();
 	        		$('.show_when_with_key').show();
 	        		$('#service_account_email').val(this.service_account_email);
+	        		$('#private_key_id').val(this.private_key_id);
 	        	}
 	        	
 	        	// Show the parts of the view that show that a key has _not_ been loaded
@@ -232,6 +265,7 @@ require(['jquery','underscore','splunkjs/mvc', 'jquery', 'splunkjs/mvc/simplespl
 	        		$('.show_when_no_key').show();
 	        		$('.show_when_with_key').hide();
 	        		$('#service_account_email').val("");
+	        		$('#private_key_id').val("");
 	        	}
 	        	
 	        }
