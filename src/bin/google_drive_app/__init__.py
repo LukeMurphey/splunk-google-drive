@@ -25,6 +25,15 @@ import os
 import sys
 from splunk.appserver.mrsparkle.lib.util import make_splunkhome_path
 
+# Prune directories from other apps so that we don't step on each other with our imports (see http://lukemurphey.net/issues/1281)
+paths_to_remove = []
+for path in sys.path:
+    if ('/etc/apps/' in path and not '/etc/apps/google_drive' in path) or ('\\etc\\apps\\' in path and not '\\etc\\apps\\google_drive' in path):
+        paths_to_remove.append(path)
+
+for path in paths_to_remove:
+    sys.path.remove(path)
+
 sys.path.append(make_splunkhome_path(['etc', 'apps', 'google_drive', 'bin', 'google_drive_app']))
 sys.path.append(make_splunkhome_path(['etc', 'apps', 'google_drive', 'bin', 'google_drive_app', 'oauth2client']))
 

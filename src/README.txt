@@ -51,7 +51,6 @@ You can access the source-code and get technical details about the app at:
 Known Issues
 ================================================
 
-* This app cannot be installed with the RADIUS Authentication app (https://splunkbase.splunk.com/app/981/) due to an incompatibility with the six library.
 * If you change the service account key, existing inputs will not recognize the new key until they are restarted. You can either disable and then re-enable each input or restart Splunk.
 
 
@@ -69,4 +68,6 @@ Change History
 |         | Fixed issue where exporting did not work                                                                         |
 +---------+------------------------------------------------------------------------------------------------------------------+
 | 1.0     | Added support for oauth2 service account credentials                                                             |
++---------+------------------------------------------------------------------------------------------------------------------+
+| 1.0.1   | Fixed incompatibility with GoogleAppsForSplunk                                                                   |
 +---------+------------------------------------------------------------------------------------------------------------------+
