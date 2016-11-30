@@ -122,6 +122,7 @@ class ServiceAccountKeys(controllers.BaseController):
         
         file_name = None
         service_account_email = None
+        private_key_id = None
         
         # Get the existing service key
         session_key = cherrypy.session.get('sessionKey')
