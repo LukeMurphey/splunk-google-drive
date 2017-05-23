@@ -10,25 +10,36 @@ This app provides a mechanism for importing and exporting data to/from Google dr
 Configuring Splunk
 ================================================
 
+
+Step one: install the app into Splunk
 ----------------------------------------------------------------
-Step one: configure the app with a service account
+
+Install this app into Splunk by doing the following:
+
+  1. Log in to Splunk Web and navigate to "Apps » Manage Apps" via the app dropdown at the top left of Splunk's user interface
+  2. Click the "install app from file" button
+  3. Upload the file by clicking "Choose file" and selecting the app
+  4. Click upload
+  5. Restart Splunk if a dialog asks you to
+
+
+Step two: configure the app with a service account
 ----------------------------------------------------------------
 
 You will need to create an OAuth2 service account key from Google and assign the service account permission to read and/or write to the files accordingly. See the following for specific instructions:
 
      http://lukemurphey.net/projects/splunk-google-docs/wiki/How_to_setup_app
 
-----------------------------------------------------------------
-Step two: give the service account permission to the spreadsheet
-----------------------------------------------------------------
 
-You will need to give the service account permission to read and/or write to the spreadsheet. See http://lukemurphey.net/projects/splunk-google-docs/wiki/How_to_setup_app.
 
-----------------------------------------------------------------
-Step three: create input
-----------------------------------------------------------------
+================================================
+Adding a new input/output
+================================================
 
-This app exposes a new input type that can be configured in the Splunk Manager. To configure it, create a new input in the Manager under Data inputs » Google Spreadsheet.
+Once the app is installed, you can use the app by configuring a new input:
+  1. Navigate to "Settings » Data Inputs" at the menu at the top of Splunk's user interface.
+  2. Click "Google Spreadsheet"
+  3. Click "New" to make a new instance of an input
 
 
 
