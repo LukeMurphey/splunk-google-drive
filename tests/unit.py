@@ -1,4 +1,14 @@
 # coding=utf-8
+"""
+This test case works with a file shared from Google Drive. To use it, you will need to:
+
+1) Create a spreadsheet on Google Drive named "test_case_import" with a sheet named "data"
+2) Create another  spreadsheet on Google Drive named "test_case_export" with a sheet named "data"
+3) Export a service key to an account that has been given read access to the spreadsheet
+4) Declare the path to the service key in local.properties like this:
+5) Create a lookup named "test_case_import.csv" in the searcch app (you can use the Lookup Editor to do this)
+"""
+
 import unittest
 import sys
 import os
@@ -19,7 +29,7 @@ class SplunkGoogleDriveTestCase(unittest.TestCase):
         m = re.search(pattern, file_contents)
         
         if m is None:
-            raise Exeption(exception_msg)
+            raise Exception(exception_msg)
         else:
             value = m.groups()[0]
             
@@ -64,7 +74,6 @@ class TestLookupExport(SplunkGoogleDriveTestCase):
         namespace = "search"
         owner = "nobody"
         lookup_name = "test_case_import.csv"
-        created_file_path = None
         
         google_spreadsheet_name = "test_case_export"
         google_worksheet_name = "data"
@@ -131,7 +140,6 @@ class TestGoogleSync(SplunkGoogleDriveTestCase):
     def test_get_worksheet_updated_date(self):
         self.google_lookup_sync.get_worksheet_updated_date("test_case_import", "data")
         
-
     def test_no_auth_creds(self):
         
         def make_client_no_creds():
@@ -150,8 +158,7 @@ class TestGoogleSync(SplunkGoogleDriveTestCase):
         
     def test_open_google_spreadsheet_doesnt_exist(self):
         self.assertRaises( SpreadsheetInaccessible, lambda: self.google_lookup_sync.open_google_spreadsheet(title="this_doesnt_exist") )
-        
- 
+
     def test_get_or_make_sheet_if_necessary(self):
         
         google_spread_sheet = self.google_lookup_sync.open_google_spreadsheet(title="test_case_make_worksheet")
