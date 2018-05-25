@@ -1,0 +1,12 @@
+<nav search_view="search" color="#65A637">
+  <view name="search" default="true" />
+  <collection label="Lookups">
+  <view name="lookup_sheet" />
+  <view name="lookup_csv" />
+</collection>
+<collection label="Configuration">
+  <view name="setup_view_dashboard" />
+  <view name="delete_keys" />
+</collection>
+  <view name="dashboards" />
+</nav>

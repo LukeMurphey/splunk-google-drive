@@ -1,0 +1,67 @@
+<form>
+  <label>Lookup CSV</label>
+  <fieldset submitButton="false">
+    <input type="dropdown" token="realm">
+      <label>Account</label>
+      <fieldForLabel>realm</fieldForLabel>
+      <fieldForValue>realm</fieldForValue>
+      <search>
+        <query>| rest /servicesNS/nobody/google_drive/storage/passwords | table realm clear_password</query>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+    <input type="dropdown" token="fileId">
+      <label>File</label>
+      <fieldForLabel>name</fieldForLabel>
+      <fieldForValue>id</fieldForValue>
+      <search>
+        <query>| rest /servicesNS/nobody/google_drive/storage/passwords | search realm="$realm$"| getcsv</query>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Information</title>
+      <html>
+      <table>
+        <tr>
+          <td>
+           This Dashboard allows you to import data from a CSV file stored in Google Drive, into Splunk. You can start by selecting your Google Account, and then choosing one of the CSV files that you have available. <br/>
+              <br/>
+              <strong>Requirements:</strong> Each CSV you create should be formatted properly. If you open that CSV file in Google Sheets, you can confirm it looks correct. Here are some guidelines for verifying a CSV file is formatted correctly.  
+              <ol>
+  <li>
+                  <strong>Row 1 should be reserved for your "header".</strong> These are also known as "column names" or "feature names". An example of a header is highlighted in green in the screenshot. You do not need to highlight your header in green.</li>
+  <li>
+                  <strong>All data should remain within the bounds of your header.</strong> So if you have 4 column names (like in the screenshot) you should only have data in columns A-D, not in column E. Your data should also start in Row 2, not in Row 1. Sample data is highlighted in yellow in the screenshot.  </li>
+</ol>
+<br/>
+         If you've followed these guidelines and are still encountering errors, please reach out on Splunk Answers.      
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <center>
+                <img src="/static/app/google_drive/sheet_info.jpg"/>
+              </center>
+          </td>
+        </tr>
+      </table>
+ </html>
+    </panel>
+    <panel>
+      <table>
+        <search>
+          <query>| rest /servicesNS/nobody/google_drive/storage/passwords | search realm="$realm$" | eval fileId="$fileId$" | table clear_password username fileId | exportcsv</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+</form>

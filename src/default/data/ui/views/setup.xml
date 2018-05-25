@@ -1,0 +1,13 @@
+<dashboard script="index.js"
+           stylesheet="configure.css"
+           hideAppBar="true"
+           isDashboard="false"
+           hideEdit="true">
+  <row>
+    <panel id="googledriveConfig">
+      <html>
+        <div class="container" id="googledriveConfigWrapper"/>
+      </html>
+    </panel>
+  </row>
+</dashboard>
