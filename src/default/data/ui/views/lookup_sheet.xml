@@ -21,12 +21,22 @@
         <latest>now</latest>
       </search>
     </input>
+    <input type="dropdown" token="subsheetId">
+      <label>Subsheet Select</label>
+      <fieldForLabel>title</fieldForLabel>
+      <fieldForValue>title</fieldForValue>
+      <search>
+        <query>| rest /servicesNS/nobody/google_drive/storage/passwords | eval fileId="$fileId$"| search realm="$realm$"| subsheetlist</query>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
   </fieldset>
   <row>
     <panel>
       <table>
         <search>
-          <query>| rest /servicesNS/nobody/google_drive/storage/passwords | search realm="$realm$" | eval fileId="$fileId$" | table clear_password username fileId | exportsheet</query>
+          <query>| rest /servicesNS/nobody/google_drive/storage/passwords | search realm="$realm$" | eval fileId="$fileId$" | eval subsheetId = "$subsheetId$" | table clear_password subsheetId username fileId | exportsubsheet</query>
           <earliest>-24h@h</earliest>
           <latest>now</latest>
         </search>
@@ -40,7 +50,7 @@
       <title>Number of Sheets inside this Google Sheet</title>
       <single>
         <search>
-          <query>| rest /servicesNS/nobody/google_drive/storage/passwords | search realm="$realm$" | eval fileId="$fileId$" | table clear_password username fileId | subsheetlist | stats count</query>
+          <query>| rest /servicesNS/nobody/google_drive/storage/passwords | search realm="$realm$" | eval fileId="$fileId$" | subsheetlist | stats count</query>
           <earliest>-24h@h</earliest>
           <latest>now</latest>
         </search>
@@ -63,7 +73,7 @@
   <li>
                   <strong>All data should remain within the bounds of your header.</strong> So if you have 4 column names (like in the screenshot) you should only have data in columns A-D, not in column E. Your data should also start in Row 2, not in Row 1. Sample data is highlighted in yellow in the screenshot.  </li>
   <li>
-                  <strong>This Dashboard only supports exporting the first sheet in a Google Sheet as a CSV file.</strong> This is consistent with the Google API Documentation found <a href="https://developers.google.com/drive/v3/web/manage-downloads">here</a>. The first sheet is highlighted in the screenshot in red. </li>
+                  <strong>This Dashboard supports performing a lookup of any GRID style sheets in your Google Spreadsheet.</strong>  You are also able to lookup multiple subsheets inside of a Google Sheet. You can select any Spreadsheet and any subsheet using the dropdowns above. </li>
 </ol>
 <br/>
          If you've followed these guidelines and are still encountering errors, please reach out on Splunk Answers.      
