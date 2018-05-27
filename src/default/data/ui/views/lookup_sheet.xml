@@ -24,6 +24,31 @@
   </fieldset>
   <row>
     <panel>
+      <table>
+        <search>
+          <query>| rest /servicesNS/nobody/google_drive/storage/passwords | search realm="$realm$" | eval fileId="$fileId$" | table clear_password username fileId | exportsheet</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Number of Sheets inside this Google Sheet</title>
+      <single>
+        <search>
+          <query>| rest /servicesNS/nobody/google_drive/storage/passwords | search realm="$realm$" | eval fileId="$fileId$" | table clear_password username fileId | subsheetlist | stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+    <panel>
       <title>Information</title>
       <html>
       <table>
@@ -53,17 +78,6 @@
         </tr>
       </table>
  </html>
-    </panel>
-    <panel>
-      <table>
-        <search>
-          <query>| rest /servicesNS/nobody/google_drive/storage/passwords | search realm="$realm$" | eval fileId="$fileId$" | table clear_password username fileId | exportsheet</query>
-          <earliest>-24h@h</earliest>
-          <latest>now</latest>
-        </search>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-      </table>
     </panel>
   </row>
 </form>

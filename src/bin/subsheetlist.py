@@ -14,6 +14,7 @@ import sys
 import splunk.rest
 import datetime
 import re
+import csv
 import logging
 import logging.handlers
 import sys
@@ -71,8 +72,7 @@ def GetTokens(sesssionKey):
 
 def GetFiles(api_key, page_token, results, logger):
 	try:
-		r=requests.get('https://www.googleapis.com/drive/v3/files?pageSize=1000&pageToken'+page_token+'&access_token='+api_key+'&q=mimeType+%3d+%27application/vnd.google-apps.spreadsheet%27')
-
+		r=requests.get('https://www.googleapis.com/drive/v3/files?pageToken'+page_token+'&access_token='+api_key+'&q=name+contains+%27.spreadsheet%27+or+name+contains+%27csv%27+or+name+contains+%27xls%27')
 		r = json.loads(r.text)
 
 		for file in r["files"]:
@@ -101,6 +101,31 @@ def GetFiles(api_key, page_token, results, logger):
 	except Exception as e:
 		logger.info(str(e))
 		return results
+		
+def GetSheetList(api_key, id, logger):
+	try:
+		results = []
+		result = {}
+		r=requests.get('https://sheets.googleapis.com/v4/spreadsheets/'+id+'?access_token='+api_key)
+		r = json.loads(r.text)
+
+		for sheet in r["sheets"]:
+			if sheet["properties"]["sheetType"] == "GRID":
+				result = {}
+				result["title"] = sheet["properties"]["title"]
+				result["sheetId"] = sheet["properties"]["sheetId"]
+				result["rowCount"] = sheet["properties"]["gridProperties"]["rowCount"]
+				result["columnCount"] = sheet["properties"]["gridProperties"]["columnCount"]
+				results.append(result)	
+		return results
+   		
+	except Exception as e:
+		results = []
+		result["ERROR"] = str(e)
+		results.append(result)
+		logger.info(str(e))
+		return results
+
 
 now = datetime.datetime.now()
 
@@ -110,12 +135,14 @@ logger = setup_logger(logging.INFO)
 results,dummy,settings = splunk.Intersplunk.getOrganizedResults()
 sessionKey = settings.get("sessionKey")
 
+
 for result in results:
 	try:
 		#Get Google Drive Name and API Creds from Password Store
 		username=result['username']
 		password=result['clear_password']
 
+		fileId = result['fileId']
 		#Parse JSON API Creds
 		tokens = json.loads(password)
 	
@@ -129,35 +156,13 @@ for result in results:
 		new_creds = json.loads(new_creds)
 		api_key=new_creds["APIKey"]
 
-        	
+		
 	except Exception as e:
 		logger.info(str(e))
-
-r=requests.get('https://www.googleapis.com/drive/v3/files?pageSize=1000&access_token='+api_key+'&q=mimeType+%3d+%27application/vnd.google-apps.spreadsheet%27')
-
-r = json.loads(r.text)
-
-results = []
-for file in r["files"]:
-	result={}
-	if "name" in file:
-		result["name"] = file["name"]
-	else:
-		result["name"] = "(None)"
-		
-	if "id" in file:
-		result["id"] = file["id"]
-	else:
-		result["id"] = "(None)"
-		
-	if "mimeType" in file:
-		result["mimeType"] = file["mimeType"]
-	else:
-		result["mimeType"] = "(None)"
-	results.append(result)
-
-if 'nextPageToken' in r:
-	page_token=r["nextPageToken"]
-	results = GetFiles(api_key, page_token, results, logger)
-
-splunk.Intersplunk.outputResults(results)
+try:
+	r = "the"
+	#new = GetSheet(api_key, fileId, logger)
+	new = GetSheetList(api_key, fileId, logger)
+except Exception as e:
+	logger.info(str(e))
+splunk.Intersplunk.outputResults(new)
