@@ -166,6 +166,9 @@ def GetSubSheet(api_key, subsheetId, id, logger):
 
 		result = {}
 		for row in reader:
+			if i_row==0:
+				i_row=i_row+1
+				continue
 			i_row_value = 0
 			result = {}
 			for item in row:
