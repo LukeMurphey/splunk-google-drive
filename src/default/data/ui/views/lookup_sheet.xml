@@ -1,6 +1,6 @@
 <form>
   <label>Lookup Google Sheet</label>
-  <fieldset submitButton="false">
+  <fieldset submitButton="true" autoRun="false">
     <input type="dropdown" token="realm">
       <label>Account</label>
       <fieldForLabel>realm</fieldForLabel>
@@ -31,12 +31,43 @@
         <latest>now</latest>
       </search>
     </input>
+    <input type="radio" token="export_answer" searchWhenChanged="true">
+      <label>Export Sheet?</label>
+      <fieldForLabel>answer</fieldForLabel>
+      <fieldForValue>answer</fieldForValue>
+      <search>
+        <query>| makeresults | eval answer="yes"  | append [|makeresults | eval answer="no"] | fields - _time</query>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </search>
+      <change>
+        <condition value="yes">
+          <set token="show_category">true</set>
+        </condition>
+        <condition value="no">
+          <unset token="show_category"></unset>
+          <set token="outputlookup_filename">| noop</set>
+        </condition>
+      </change>
+    </input>
+    <input type="dropdown" depends="$show_category$" token="outputlookup_filename">
+      <label>Destination Lookup Table</label>
+      <fieldForLabel>title</fieldForLabel>
+      <fieldForValue>output_command</fieldForValue>
+      <search>
+        <query>|rest /servicesNS/nobody/google_drive/data/lookup-table-files | dedup title | table eai:acl.app eai:appName filename title fields_list updated id | eval export_answer="$export_answer$" | eval output_command=case(export_answer=="yes", "| outputlookup ".title, export_answer=="no","") | dedup output_command</query>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </search>
+      <choice value="| noop">None</choice>
+      <default>| noop</default>
+    </input>
   </fieldset>
   <row>
     <panel>
       <table>
         <search>
-          <query>| rest /servicesNS/nobody/google_drive/storage/passwords | search realm="$realm$" | eval fileId="$fileId$" | eval subsheetId = "$subsheetId$" | table clear_password subsheetId username fileId | exportsubsheet</query>
+          <query>| rest /servicesNS/nobody/google_drive/storage/passwords `getsheet("$realm$", "$fileId$", "$subsheetId$")` $outputlookup_filename$</query>
           <earliest>-24h@h</earliest>
           <latest>now</latest>
         </search>
