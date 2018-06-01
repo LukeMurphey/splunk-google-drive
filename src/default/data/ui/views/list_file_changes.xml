@@ -1,0 +1,30 @@
+<form>
+  <label>List File Changes</label>
+  <description>This dashboard will do a few things. It will begin by searching for any stored Google Drive "checkpoint" value in the KVStore. If one is not found, it will create a checkpoint based on the current state of your Google Drive. This dashboard will store a new Google Drive "checkpoint" each time the dashboard is run. Upon each future run of the dashboard, the dashboard will find any differences between the current run, and the last run of the dashboard.</description>
+  <fieldset submitButton="false" autoRun="false">
+    <input type="dropdown" token="realm">
+      <label>Account</label>
+      <fieldForLabel>realm</fieldForLabel>
+      <fieldForValue>realm</fieldForValue>
+      <search>
+        <query>| rest /servicesNS/nobody/google_drive/storage/passwords | table realm clear_password</query>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <table>
+        <title>File Change List</title>
+        <search>
+          <query>|rest /servicesNS/nobody/google_drive/storage/passwords `listchanges($realm$)` | table mimeType name</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+</form>

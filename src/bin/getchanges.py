@@ -17,6 +17,7 @@ import re
 import logging
 import logging.handlers
 import sys
+import splunk.rest
 import json
 import splunklib.client as client
 
@@ -130,41 +131,83 @@ for result in results:
 		new_creds = json.loads(new_creds)
 		api_key=new_creds["APIKey"]
 
-        	
+		#Get startPageToken from KVStore
+		startPageToken = "0"
+		service = client.connect(token=sessionKey, owner='nobody', app='google_drive') 
+		checkpoint_data=service.kvstore['googledrivecheckpoints'].data.query()
+
+
+		for row in service.kvstore['googledrivecheckpoints'].data.query():
+			if "username" in row:
+				if row["username"] == username:
+					startPageToken = row["startPageToken"]
+					keyid = row["_key"]
+					
+			
+		#If no startPageToken in KVStore, get it from Google API
+		if startPageToken == "0":
+			q = requests.get('https://www.googleapis.com/drive/v3/changes/startPageToken?access_token='+api_key)
+			q = json.loads(q.text)
+			startPageToken = q["startPageToken"]
+			collection = service.kvstore['googledrivecheckpoints']
+			collection.data.insert("{\"username\":\""+username+"\",\"startPageToken\":\""+startPageToken+"\"}")
+			results = []
+			result = {}
+			result["startPageToken"] = startPageToken
+			result["Error"] = "No Start Page Token Found, storing new token"+startPageToken
+			results.append(result)
+			splunk.Intersplunk.outputResults(results)
+			continue
+		#Even if there is a startPageToken in the KVStore, update it with a new token
+		else:
+			q = requests.get('https://www.googleapis.com/drive/v3/changes/startPageToken?access_token='+api_key)
+			q = json.loads(q.text)
+			newStartPageToken = q["startPageToken"]
+			collection = service.kvstore['googledrivecheckpoints']
+			collection.data.update(str(keyid),"{\"username\":\""+username+"\",\"startPageToken\":\""+newStartPageToken+"\"}")
+
+
+
+		r = requests.get('https://www.googleapis.com/drive/v3/changes?pageSize=1000&pageToken='+startPageToken+'&access_token='+api_key)
+		r = json.loads(r.text)
+
+
+		results = []
+		for change in r["changes"]:
+			result={}
+			if "file" in change:
+				if "name" in change["file"]:
+					result["name"] = change["file"]["name"]
+				else:
+					result["name"] = "(None)"
+		
+				if "id" in change["file"]:
+					result["id"] = change["file"]["id"]
+				else:
+					result["id"] = "(None)"
+		
+				if "mimeType" in change["file"]:
+					result["mimeType"] = change["file"]["mimeType"]
+				else:
+					result["mimeType"] = "(None)"
+				result["startPageToken"] = startPageToken
+				result["username"] = username
+				result["keyid"] = keyid
+				results.append(result)
+
+
+		if 'nextPageToken' in r:
+			page_token=r["nextPageToken"]
+			results = GetChanges(api_key, page_token, results, logger)
+
+		splunk.Intersplunk.outputResults(results)
+	
 	except Exception as e:
 		logger.info(str(e))
-		
-q = requests.get('https://www.googleapis.com/drive/v3/changes/startPageToken?access_token='+api_key)
-q = json.loads(q.text)
-
-startPageToken = q["startPageToken"]
-startPageToken="757166"
-r=requests.get('https://www.googleapis.com/drive/v3/changes?pageSize=1000&pageToken='+startPageToken+'&access_token='+api_key)
-
-r = json.loads(r.text)
-
-results = []
-for change in r["changes"]:
-	result={}
-	if "file" in change:
-		if "name" in change["file"]:
-			result["name"] = change["file"]["name"]
-		else:
-			result["name"] = "(None)"
-		
-		if "id" in change["file"]:
-			result["id"] = change["file"]["id"]
-		else:
-			result["id"] = "(None)"
-		
-		if "mimeType" in change["file"]:
-			result["mimeType"] = change["file"]["mimeType"]
-		else:
-			result["mimeType"] = "(None)"
+		results = []
+		result = {}
+		result["Error"] = str(e)
 		results.append(result)
-
-#if 'nextPageToken' in r:
-#	page_token=r["nextPageToken"]
-#	results = GetChanges(api_key, page_token, results, logger)
-
-splunk.Intersplunk.outputResults(results)
+		splunk.Intersplunk.outputResults(results)
+		
+		
