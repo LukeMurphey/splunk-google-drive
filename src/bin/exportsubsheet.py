@@ -215,12 +215,20 @@ for result in results:
 		#Get New API Key	
 		new_creds = json.loads(new_creds)
 		api_key=new_creds["APIKey"]
+		
+		try:
+			new = GetSubSheet(api_key, subsheetId, fileId, logger)
+		except Exception as e:
+			logger.info(str(e))
+		splunk.Intersplunk.outputResults(new)
 
 		
 	except Exception as e:
 		logger.info(str(e))
-try:
-	new = GetSubSheet(api_key, subsheetId, fileId, logger)
-except Exception as e:
-	logger.info(str(e))
-splunk.Intersplunk.outputResults(new)
+		results = []
+		result = {}
+		result["Error"] = str(e)
+		results.append(result)
+		splunk.Intersplunk.outputResults(results)
+
+

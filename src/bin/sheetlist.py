@@ -128,36 +128,40 @@ for result in results:
 		#Get New API Key	
 		new_creds = json.loads(new_creds)
 		api_key=new_creds["APIKey"]
+		r=requests.get('https://www.googleapis.com/drive/v3/files?pageSize=1000&access_token='+api_key+'&q=mimeType+%3d+%27application/vnd.google-apps.spreadsheet%27')
+
+		r = json.loads(r.text)
+
+		results = []
+		for file in r["files"]:
+			result={}
+			if "name" in file:
+				result["name"] = file["name"]
+			else:
+				result["name"] = "(None)"
+		
+			if "id" in file:
+				result["id"] = file["id"]
+			else:
+				result["id"] = "(None)"
+		
+			if "mimeType" in file:
+				result["mimeType"] = file["mimeType"]
+			else:
+				result["mimeType"] = "(None)"
+			results.append(result)
+
+		if 'nextPageToken' in r:
+			page_token=r["nextPageToken"]
+			results = GetFiles(api_key, page_token, results, logger)
+
+		splunk.Intersplunk.outputResults(results)
 
         	
 	except Exception as e:
 		logger.info(str(e))
-
-r=requests.get('https://www.googleapis.com/drive/v3/files?pageSize=1000&access_token='+api_key+'&q=mimeType+%3d+%27application/vnd.google-apps.spreadsheet%27')
-
-r = json.loads(r.text)
-
-results = []
-for file in r["files"]:
-	result={}
-	if "name" in file:
-		result["name"] = file["name"]
-	else:
-		result["name"] = "(None)"
-		
-	if "id" in file:
-		result["id"] = file["id"]
-	else:
-		result["id"] = "(None)"
-		
-	if "mimeType" in file:
-		result["mimeType"] = file["mimeType"]
-	else:
-		result["mimeType"] = "(None)"
-	results.append(result)
-
-if 'nextPageToken' in r:
-	page_token=r["nextPageToken"]
-	results = GetFiles(api_key, page_token, results, logger)
-
-splunk.Intersplunk.outputResults(results)
+		results = []
+		result = {}
+		result["Error"] = str(e)
+		results.append(result)
+		splunk.Intersplunk.outputResults(results)

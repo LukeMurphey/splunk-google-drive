@@ -156,13 +156,18 @@ for result in results:
 		new_creds = json.loads(new_creds)
 		api_key=new_creds["APIKey"]
 
+		try:
+			r = "the"
+			new = GetSheetList(api_key, fileId, logger)
+		except Exception as e:
+			logger.info(str(e))
+		splunk.Intersplunk.outputResults(new)
 		
 	except Exception as e:
 		logger.info(str(e))
-try:
-	r = "the"
-	#new = GetSheet(api_key, fileId, logger)
-	new = GetSheetList(api_key, fileId, logger)
-except Exception as e:
-	logger.info(str(e))
-splunk.Intersplunk.outputResults(new)
+		results = []
+		result = {}
+		result["Error"] = str(e)
+		results.append(result)
+		splunk.Intersplunk.outputResults(results)
+
