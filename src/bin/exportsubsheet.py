@@ -143,7 +143,7 @@ def GetSheet(api_key, id, logger):
 		logger.info(str(e))
 		return results
 		
-def GetSubSheet(api_key, subsheetId, id, logger):
+def GetSubSheet(api_key, i_row_initial, subsheetId, id, logger):
 	try:
 		results = []
 		r=requests.get('https://sheets.googleapis.com/v4/spreadsheets/'+id+'/values/'+subsheetId+'!A1:ZZ?access_token='+api_key)
@@ -153,29 +153,30 @@ def GetSubSheet(api_key, subsheetId, id, logger):
 		i_row=0
 		keys=[]
 		for row in reader:
-			if i_row==0:
+			if i_row==int(i_row_initial):
 				i_header=0
 				for header in row:
 					key = {}
 					key[i_header]=header
 					keys.append(key)
 					i_header = i_header + 1
-				i_row=i_row+1
-				break
-		i_row=0
+			i_row=i_row+1
 
+		i_row=0
+		i_row_value = 0
 		result = {}
 		for row in reader:
-			if i_row==0:
+			if i_row<=int(i_row_initial):
 				i_row=i_row+1
 				continue
-			i_row_value = 0
-			result = {}
-			for item in row:
-				result[keys[i_row_value][i_row_value]]=item
-				i_row_value = i_row_value + 1
-			results.append(result)
-			i_row=i_row+1		
+			if i_row>int(i_row_initial):
+				i_row_value = 0
+				result = {}
+				for item in row:
+					result[keys[i_row_value][i_row_value]]=item
+					i_row_value = i_row_value + 1
+				results.append(result)
+				i_row=i_row+1		
 			
 		return results
    		
@@ -193,6 +194,12 @@ logger = setup_logger(logging.INFO)
 
 results,dummy,settings = splunk.Intersplunk.getOrganizedResults()
 sessionKey = settings.get("sessionKey")
+
+keywords, options = splunk.Intersplunk.getKeywordsAndOptions()
+if "headerRow" in options:
+	i_row = options["headerRow"]
+else:
+	i_row=0
 
 
 for result in results:
@@ -217,9 +224,10 @@ for result in results:
 		api_key=new_creds["APIKey"]
 		
 		try:
-			new = GetSubSheet(api_key, subsheetId, fileId, logger)
+			new = GetSubSheet(api_key, i_row, subsheetId, fileId, logger)
 		except Exception as e:
 			logger.info(str(e))
+
 		splunk.Intersplunk.outputResults(new)
 
 		
