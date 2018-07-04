@@ -143,10 +143,10 @@ def GetSheet(api_key, id, logger):
 		logger.info(str(e))
 		return results
 		
-def GetSubSheet(api_key, i_row_initial, subsheetId, id, logger):
+def GetSubSheet(api_key, i_row_initial, subsheetId, id, logger, cell_range):
 	try:
 		results = []
-		r=requests.get('https://sheets.googleapis.com/v4/spreadsheets/'+id+'/values/'+subsheetId+'!A1:ZZ?access_token='+api_key)
+		r=requests.get('https://sheets.googleapis.com/v4/spreadsheets/'+id+'/values/'+subsheetId+'!'+cell_range+'?access_token='+api_key)
 		#reader = csv.reader(r.text.splitlines())
 		r = json.loads(r.text)
 		reader=r["values"]
@@ -201,6 +201,10 @@ if "headerRow" in options:
 else:
 	i_row=0
 
+if "cellRange" in options:
+	cell_range = options["cellRange"]
+else:
+	cell_range = "A1:ZZ"
 
 for result in results:
 	try:
@@ -224,7 +228,7 @@ for result in results:
 		api_key=new_creds["APIKey"]
 		
 		try:
-			new = GetSubSheet(api_key, i_row, subsheetId, fileId, logger)
+			new = GetSubSheet(api_key, i_row, subsheetId, fileId, logger, cell_range)
 		except Exception as e:
 			logger.info(str(e))
 
