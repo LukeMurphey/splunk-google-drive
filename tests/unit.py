@@ -35,18 +35,19 @@ class SplunkGoogleDriveTestCase(unittest.TestCase):
             
             return value
     
+    def get_credential_file_path(self):
+        props_fh = open('../local.properties', 'r')
+        
+        props = props_fh.read()
+        return self.get_property("value[.]test[.]oauth2_credentials[ ]*[=](.*)", props, "Google credentials were not specified")
+
     def get_credentials(self):
         
         login = None
         password = None
         
-        props_fh = open('../local.properties', 'r')
-        
-        props = props_fh.read()
-        #props_fh.readlines()
-        
         # Find the path of the key
-        credentials_path = self.get_property("value[.]test[.]oauth2_credentials[ ]*[=](.*)", props, "Google credentials were not specified")
+        credentials_path = self.get_credential_file_path()
 
         # Load the key file
         json_key = json.load(open(os.path.join("..", credentials_path)))
@@ -56,9 +57,9 @@ class SplunkGoogleDriveTestCase(unittest.TestCase):
     
     def get_google_lookup_sync_instance(self):
         
-        client_email, private_key = self.get_credentials()
+        key_file = self.get_credential_file_path()
         
-        return GoogleLookupSync(client_email, private_key)
+        return GoogleLookupSync(key_file)
     
     def setUp(self):
         self.google_lookup_sync = self.get_google_lookup_sync_instance()
