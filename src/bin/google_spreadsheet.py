@@ -1,7 +1,6 @@
 
-from splunk.appserver.mrsparkle.lib.util import make_splunkhome_path
+from splunk.clilib.bundle_paths import make_splunkhome_path
 from splunk.models.base import SplunkAppObjModel
-from google_drive_app.modular_input import Field, ModularInput, DurationField, BooleanField, DeprecatedField
 from splunk.models.field import Field as ModelField
 from splunk.models.field import IntField as ModelIntField 
 
@@ -13,6 +12,10 @@ import os
 
 import httplib2
 from httplib2 import socks
+
+path_to_mod_input_lib = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modular_input.zip')
+sys.path.insert(0, path_to_mod_input_lib)
+from modular_input import Field, ModularInput, DurationField, BooleanField, DeprecatedField
 
 from google_drive_app import GoogleLookupSync, SpreadsheetInaccessible
     

@@ -2,7 +2,7 @@ from splunk.models.base import SplunkAppObjModel
 from splunk.models.field import Field
 import splunk 
 import splunk.rest as rest
-from splunk.appserver.mrsparkle.lib.util import make_splunkhome_path
+from splunk.clilib.bundle_paths import make_splunkhome_path
 
 import os
 import sys

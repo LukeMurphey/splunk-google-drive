@@ -23,7 +23,7 @@ import lookupfiles
 
 import os
 import sys
-from splunk.appserver.mrsparkle.lib.util import make_splunkhome_path
+from splunk.clilib.bundle_paths import make_splunkhome_path
 
 # Prune directories from other apps so that we don't step on each other with our imports (see http://lukemurphey.net/issues/1281)
 paths_to_remove = []
