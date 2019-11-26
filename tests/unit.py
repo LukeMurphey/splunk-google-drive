@@ -3,10 +3,10 @@
 This test case works with a file shared from Google Drive. To use it, you will need to:
 
 1) Create a spreadsheet on Google Drive named "test_case_import" with a sheet named "data"
-2) Create another  spreadsheet on Google Drive named "test_case_export" with a sheet named "data"
+2) Create another spreadsheet on Google Drive named "test_case_export" with a sheet named "data"
 3) Export a service key to an account that has been given read access to the spreadsheet
 4) Declare the path to the service key in local.properties like this:
-5) Create a lookup named "test_case_import.csv" in the searcch app (you can use the Lookup Editor to do this)
+5) Create a lookup named "test_case_import.csv" in the search app (you can use the Lookup Editor to do this)
 """
 
 import unittest
