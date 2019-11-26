@@ -1,6 +1,6 @@
 
-require(['jquery','underscore','splunkjs/mvc', 'jquery', 'splunkjs/mvc/simplesplunkview', 'splunkjs/mvc/simplexml/ready!'],
-	function($, _, mvc, $, SimpleSplunkView){
+require(['jquery','underscore','splunkjs/mvc', 'jquery', 'splunkjs/mvc/simplesplunkview', 'util/splunkd_utils', 'splunkjs/mvc/simplexml/ready!'],
+	function($, _, mvc, $, SimpleSplunkView, splunkd_utils){
 		
 	    // Define the setup view class
 	    var GoogleDriveSetupView = SimpleSplunkView.extend({
@@ -89,7 +89,7 @@ require(['jquery','underscore','splunkjs/mvc', 'jquery', 'splunkjs/mvc/simplespl
 	        	
 	        	var promise = jQuery.Deferred();
 	        	
-	        	var file_uri = Splunk.util.make_url("/custom/google_drive/service_account_keys/uploadServiceAccountKey")
+	        	var file_uri = splunkd_utils.fullpath(['/services/data/service_account_keys/key'].join('/'));
 	        	var file_name = file.name;
 
 	        	var data = {
@@ -225,7 +225,7 @@ require(['jquery','underscore','splunkjs/mvc', 'jquery', 'splunkjs/mvc/simplespl
 	         */
 	        render: function () {
 	        	
-	        	var uri = Splunk.util.make_url("/custom/google_drive/service_account_keys/getDefaultServiceAccountKeyInfo")
+	        	var uri = splunkd_utils.fullpath(['/services/data/service_account_keys/key'].join('/'));
 	           
 	        	jQuery.ajax({
 		             url: uri,
