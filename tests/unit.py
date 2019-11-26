@@ -88,7 +88,7 @@ class TestLookupExport(SplunkGoogleDriveTestCase):
         google_spread_sheet = self.google_lookup_sync.open_google_spreadsheet(google_spreadsheet_name)
         worksheet = google_spread_sheet.worksheet(google_worksheet_name)
         
-        print "worksheet.version=%r, worksheet.updated=%r," % (worksheet.version, worksheet.updated)
+        print("worksheet.version=%r, worksheet.updated=%r," % (worksheet.version, worksheet.updated))
         
         # Check the columns
         self.assertEquals(worksheet.acell("A1").value, "name")
@@ -123,7 +123,7 @@ class TestLookupExport(SplunkGoogleDriveTestCase):
         google_spread_sheet = self.google_lookup_sync.open_google_spreadsheet("test_case_export")
         worksheet = google_spread_sheet.worksheet("data")
         
-        print "worksheet.version=%r, worksheet.updated=%r," % (worksheet.version, worksheet.updated)
+        print("worksheet.version=%r, worksheet.updated=%r," % (worksheet.version, worksheet.updated))
 
         # Check the columns
         self.assertEquals(worksheet.acell("A1").value, "name")
