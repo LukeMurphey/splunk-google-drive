@@ -3,13 +3,7 @@ This module includes classes necessary to export and import lookups to Google sp
 
 
 from google_drive_app import GoogleLookupSync
-
-json_key = json.load(open('my_google_auth_file.json'))
-
-json_key['client_email'], json_key['private_key']
-
-google_lookup_sync = GoogleLookupSync(login, password)
-
+google_lookup_sync = GoogleLookupSync('my_google_auth_file.json')
 google_lookup_sync.import_to_lookup_file(lookup_name='some_lookup.csv', namespace='search', owner='nobody', google_spread_sheet_name='test_case_import', worksheet_name='data', session_key=session_key)
 
 """
@@ -236,7 +230,7 @@ class GoogleLookupSync(object):
         # Delete the worksheet since we will be re-creating it
         try:
             worksheet = google_spread_sheet.worksheet(worksheet_name)
-            worksheet.clear_all_cells()
+            worksheet.clear()
             #google_spread_sheet.del_worksheet(worksheet)
         except gspread.WorksheetNotFound:
             pass #Spreadsheet did not exist. That's ok, we will make it.
