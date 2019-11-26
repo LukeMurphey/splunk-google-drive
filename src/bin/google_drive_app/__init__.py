@@ -3,13 +3,7 @@ This module includes classes necessary to export and import lookups to Google sp
 
 
 from google_drive_app import GoogleLookupSync
-
-json_key = json.load(open('my_google_auth_file.json'))
-
-json_key['client_email'], json_key['private_key']
-
-google_lookup_sync = GoogleLookupSync(login, password)
-
+google_lookup_sync = GoogleLookupSync('my_google_auth_file.json')
 google_lookup_sync.import_to_lookup_file(lookup_name='some_lookup.csv', namespace='search', owner='nobody', google_spread_sheet_name='test_case_import', worksheet_name='data', session_key=session_key)
 
 """
@@ -23,6 +17,8 @@ import lookupfiles
 
 import os
 import sys
+import json
+
 from splunk.clilib.bundle_paths import make_splunkhome_path
 
 # Prune directories from other apps so that we don't step on each other with our imports (see http://lukemurphey.net/issues/1281)
@@ -38,7 +34,7 @@ sys.path.append(make_splunkhome_path(['etc', 'apps', 'google_drive', 'bin', 'goo
 sys.path.append(make_splunkhome_path(['etc', 'apps', 'google_drive', 'bin', 'google_drive_app', 'oauth2client']))
 
 import gspread
-from oauth2client.client import SignedJwtAssertionCredentials
+from oauth2client.service_account import ServiceAccountCredentials
 
 class SpreadsheetInaccessible(Exception):
     pass
@@ -57,9 +53,9 @@ class GoogleLookupSync(object):
         EXPORT      = "export"
         SYNCHRONIZE = "synchronize"
         
-    def __init__(self, client_email=None, private_key=None, logger=None):
+    def __init__(self, key_file=None, logger=None):
         
-        self.gspread_client = self.make_client(private_key, client_email)
+        self.gspread_client = self.make_client(key_file)
         self.logger = logger
         
         # Initialize a logger. This will cause it be initialized if one is not set yet.
@@ -68,21 +64,22 @@ class GoogleLookupSync(object):
         #SPL-95681
         self.update_lookup_with_rest = True
         
-    def make_client(self, private_key, client_email):
+    def make_client(self, key_file):
         """
         Authenticate to Google and initialize a gspread client.
         
         Args:
-          private_key (str): The login to use for authenticating to Google
-          client_email (str): The password to use for authenticating to Google
+          key_file (str): The path to the key file
         """
         
-        # Make sure a login name and password were provided
-        if private_key is None or client_email is None:
-            raise ValueError("Both a email address and a private key must be provided")
+        # Make sure the key was provided
+        if key_file is None :
+            raise ValueError("A key file must be provided")
         
-        scope = ['https://spreadsheets.google.com/feeds']
-        credentials = SignedJwtAssertionCredentials(client_email, private_key.encode(), scope)
+        scope = ['https://spreadsheets.google.com/feeds',
+                 'https://www.googleapis.com/auth/drive']
+
+        credentials = ServiceAccountCredentials.from_json_keyfile_name(key_file, scope)
         
         return gspread.authorize(credentials)
 
@@ -233,7 +230,7 @@ class GoogleLookupSync(object):
         # Delete the worksheet since we will be re-creating it
         try:
             worksheet = google_spread_sheet.worksheet(worksheet_name)
-            worksheet.clear_all_cells()
+            worksheet.clear()
             #google_spread_sheet.del_worksheet(worksheet)
         except gspread.WorksheetNotFound:
             pass #Spreadsheet did not exist. That's ok, we will make it.

@@ -35,18 +35,15 @@ class SplunkGoogleDriveTestCase(unittest.TestCase):
             
             return value
     
-    def get_credentials(self):
-        
-        login = None
-        password = None
-        
+    def get_credential_file_path(self):
         props_fh = open('../local.properties', 'r')
         
         props = props_fh.read()
-        #props_fh.readlines()
-        
+        return self.get_property("value[.]test[.]oauth2_credentials[ ]*[=](.*)", props, "Google credentials were not specified")
+
+    def get_credentials(self):
         # Find the path of the key
-        credentials_path = self.get_property("value[.]test[.]oauth2_credentials[ ]*[=](.*)", props, "Google credentials were not specified")
+        credentials_path = self.get_credential_file_path()
 
         # Load the key file
         json_key = json.load(open(os.path.join("..", credentials_path)))
@@ -56,9 +53,9 @@ class SplunkGoogleDriveTestCase(unittest.TestCase):
     
     def get_google_lookup_sync_instance(self):
         
-        client_email, private_key = self.get_credentials()
+        key_file = self.get_credential_file_path()
         
-        return GoogleLookupSync(client_email, private_key)
+        return GoogleLookupSync(key_file)
     
     def setUp(self):
         self.google_lookup_sync = self.get_google_lookup_sync_instance()
@@ -88,8 +85,6 @@ class TestLookupExport(SplunkGoogleDriveTestCase):
         google_spread_sheet = self.google_lookup_sync.open_google_spreadsheet(google_spreadsheet_name)
         worksheet = google_spread_sheet.worksheet(google_worksheet_name)
         
-        print("worksheet.version=%r, worksheet.updated=%r," % (worksheet.version, worksheet.updated))
-        
         # Check the columns
         self.assertEquals(worksheet.acell("A1").value, "name")
         self.assertEquals(worksheet.acell("B1").value, "value")
@@ -105,7 +100,7 @@ class TestLookupExport(SplunkGoogleDriveTestCase):
         google_spreadsheet = self.google_lookup_sync.open_google_spreadsheet(google_spreadsheet_name)
         worksheet = google_spreadsheet.worksheet(google_worksheet_name)
         
-        worksheet.clear_all_cells()
+        worksheet.clear()
         
     def test_export_by_lookup_name(self):
         
@@ -122,8 +117,6 @@ class TestLookupExport(SplunkGoogleDriveTestCase):
         # Now check the file
         google_spread_sheet = self.google_lookup_sync.open_google_spreadsheet("test_case_export")
         worksheet = google_spread_sheet.worksheet("data")
-        
-        print("worksheet.version=%r, worksheet.updated=%r," % (worksheet.version, worksheet.updated))
 
         # Check the columns
         self.assertEquals(worksheet.acell("A1").value, "name")
