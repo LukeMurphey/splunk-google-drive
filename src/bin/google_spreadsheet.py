@@ -292,7 +292,7 @@ class GoogleSpreadsheets(ModularInput):
         service_account_key_file = cleaned_params.get("service_account_key_file", None)
         google_spreadsheet       = cleaned_params["spreadsheet"]
         google_worksheet         = cleaned_params["worksheet"]
-        only_if_changed          = False # This no longer supported
+        only_if_changed          = False # This is no longer supported
         
         operation                = cleaned_params.get("operation", None)
 
