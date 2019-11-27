@@ -13,7 +13,7 @@ import csv
 
 import shutil
 import logging
-import lookupfiles
+from . import lookupfiles
 
 import os
 import sys

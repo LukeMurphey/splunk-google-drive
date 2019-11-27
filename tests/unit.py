@@ -86,14 +86,14 @@ class TestLookupExport(SplunkGoogleDriveTestCase):
         worksheet = google_spread_sheet.worksheet(google_worksheet_name)
         
         # Check the columns
-        self.assertEquals(worksheet.acell("A1").value, "name")
-        self.assertEquals(worksheet.acell("B1").value, "value")
+        self.assertEqual(worksheet.acell("A1").value, "name")
+        self.assertEqual(worksheet.acell("B1").value, "value")
         
         # Check some of the rows
-        self.assertEquals(worksheet.acell("A2").value, "one")
-        self.assertEquals(worksheet.acell("B2").value, "1")
-        self.assertEquals(worksheet.acell("A6").value, "five")
-        self.assertEquals(worksheet.acell("B6").value, "5")
+        self.assertEqual(worksheet.acell("A2").value, "one")
+        self.assertEqual(worksheet.acell("B2").value, "1")
+        self.assertEqual(worksheet.acell("A6").value, "five")
+        self.assertEqual(worksheet.acell("B6").value, "5")
         
     def clear_exported_file(self, google_spreadsheet_name="test_case_export", google_worksheet_name="data"):
         
@@ -119,14 +119,14 @@ class TestLookupExport(SplunkGoogleDriveTestCase):
         worksheet = google_spread_sheet.worksheet("data")
 
         # Check the columns
-        self.assertEquals(worksheet.acell("A1").value, "name")
-        self.assertEquals(worksheet.acell("B1").value, "value")
+        self.assertEqual(worksheet.acell("A1").value, "name")
+        self.assertEqual(worksheet.acell("B1").value, "value")
         
         # Check some of the rows
-        self.assertEquals(worksheet.acell("A2").value, "one")
-        self.assertEquals(worksheet.acell("B2").value, "1")
-        self.assertEquals(worksheet.acell("A6").value, "five")
-        self.assertEquals(worksheet.acell("B6").value, "5")
+        self.assertEqual(worksheet.acell("A2").value, "one")
+        self.assertEqual(worksheet.acell("B2").value, "1")
+        self.assertEqual(worksheet.acell("A6").value, "five")
+        self.assertEqual(worksheet.acell("B6").value, "5")
         
 class TestGoogleSync(SplunkGoogleDriveTestCase):
     

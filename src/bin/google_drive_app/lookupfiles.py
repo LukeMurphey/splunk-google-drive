@@ -125,7 +125,8 @@ def get_temporary_lookup_file(prefix=None, basedir=None):
         return tempfile.NamedTemporaryFile(prefix=prefix,
             suffix='.txt',
             dir=basedir,
-            delete=False)
+            delete=False,
+            mode='w+')
     else:
         return None
     
