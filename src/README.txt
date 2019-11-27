@@ -92,4 +92,5 @@ Change History
 |         | Added support for Python 3                                                                                       |
 |         | Added the view "google_drive_logs" to aid in troubleshooting                                                     |
 |         | Improved messaging when the user configures an input without providing the service account key                   |
+|         | Updates are now done in batch in order to reduce API usage and improve performance                               |
 +---------+------------------------------------------------------------------------------------------------------------------+

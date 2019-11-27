@@ -210,6 +210,30 @@ class GoogleLookupSync(object):
         except gspread.WorksheetNotFound:
             return None
     
+    def get_lookup_stats(self, lookup_full_path):
+        """
+        Get the row and column count for the lookup.
+
+        Args:
+          lookup_full_path (str): The full path of the file to export
+        """
+
+        col_count = 0
+        row_count = 0
+
+        with open(lookup_full_path, 'r') as file_handle:
+            # Open the file
+            csv_reader = csv.reader(file_handle)
+
+            # Determine the column count
+            col_count = len(next(csv_reader))
+            file_handle.seek(0) # Go back to the first line
+
+            # Determine the row count
+            row_count = sum(1 for row in csv_reader)
+
+        return col_count, row_count
+
     def export_lookup_file_full_path(self, lookup_full_path, namespace, owner, google_spread_sheet_name, worksheet_name, session_key, lookup_name=None):
         """
         Export the spreadsheet from the given lookup file to Google.
@@ -237,34 +261,30 @@ class GoogleLookupSync(object):
         
         # Create the worksheet
         google_work_sheet = self.get_or_make_sheet_if_necessary(google_spread_sheet, worksheet_name)
+
+        # Get the stats regaring the lookup
+        col_count, row_count = self.get_lookup_stats(lookup_full_path)
         
         # Open the lookup file and export it
         with open(lookup_full_path, 'r') as file_handle:
-            
+
+            # Get the range of cells that we will be setting
+            cell_list = worksheet.range(1, 1, row_count + 1, col_count)
+
+            # Open the file
             csv_reader = csv.reader(file_handle)
-            row_number = 1
-            
-            # Export each row
+
+            # Get an iterator for the spreadsheet
+            cell_iter = iter(cell_list)
+
+            # Write out the file
             for row in csv_reader:
-                col_number = 1
-                
-                # Might want to batch this here (for better performance)
-                # google_work_sheet.insert_row
-                
-                # Add a row
-                #google_work_sheet.append_row(row)
-                
-                # Export each cell in the row
-                for value in row:
-                    
-                    # Update the cells value
-                    google_work_sheet.update_cell(row_number, col_number, value)
-                    
-                    # Increment the column number so we remember where we are
-                    col_number = col_number + 1
-                
-                # Increment the row number so we remember where we are
-                row_number = row_number + 1
+                for cell in row:
+                    # Update the next cell
+                    next(cell_iter).value = cell
+        
+        # Write out the changes in batch
+        google_work_sheet.update_cells(cell_list)
         
         # Log the result
         self.get_logger().info('Lookup exported successfully, user=%s, namespace=%s, lookup_file=%s', owner, namespace, lookup_name)

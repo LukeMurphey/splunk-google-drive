@@ -172,6 +172,12 @@ class TestGoogleSync(SplunkGoogleDriveTestCase):
         
         # Now delete it for future tests
         google_spread_sheet.del_worksheet(worksheet)
+    
+    def test_get_lookup_stats(self):
+        col_count, row_count = self.google_lookup_sync.get_lookup_stats("files/test.csv")
+
+        self.assertEqual(col_count, 4)
+        self.assertEqual(row_count, 12)
         
 class TestLookupImport(SplunkGoogleDriveTestCase):
         
@@ -209,6 +215,7 @@ class TestLookupImport(SplunkGoogleDriveTestCase):
         self.assertTrue(os.path.exists(destination_full_path), "File to import was not created properly")
         
 if __name__ == "__main__":
+    """
     loader = unittest.TestLoader()
     suites = []
     suites.append(loader.loadTestsFromTestCase(TestLookupImport))
@@ -216,3 +223,6 @@ if __name__ == "__main__":
     suites.append(loader.loadTestsFromTestCase(TestGoogleSync))
     
     unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(suites))
+    """
+
+    unittest.main()
