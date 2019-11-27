@@ -289,12 +289,17 @@ class GoogleSpreadsheets(ModularInput):
         interval                 = cleaned_params["interval"]
         lookup_name              = cleaned_params["lookup_name"]
         
-        service_account_key_file = cleaned_params["service_account_key_file"]
+        service_account_key_file = cleaned_params.get("service_account_key_file", None)
         google_spreadsheet       = cleaned_params["spreadsheet"]
         google_worksheet         = cleaned_params["worksheet"]
         only_if_changed          = cleaned_params.get("only_if_changed", False)
         
         operation                = cleaned_params.get("operation", None)
+
+        # Stop if the service account key was not provided
+        if service_account_key_file is None:
+            self.logger.warning("The service account key was not provided. Please run setup and provide the service account key to run this input")
+            return
         
         if self.needs_another_run(input_config.checkpoint_dir, stanza, interval):
             

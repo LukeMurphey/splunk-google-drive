@@ -87,6 +87,9 @@ Change History
 |---------|------------------------------------------------------------------------------------------------------------------|
 | 1.0.3   | Fixed issue preventing the app from working on Splunk 8.0.0                                                      |
 |---------|------------------------------------------------------------------------------------------------------------------|
-| 1.1.0   | Updating to the newer version of the Google API                                                                  |
+| 1.1     | Updating to the newer version of the Google API                                                                  |
 |         | Added improved messaging when uploading a key fails                                                              |
+|         | Added support for Python 3                                                                                       |
+|         | Added the view "google_drive_logs" to aid in troubleshooting                                                     |
+|         | Improved messaging when the user configures an input without providing the service account key                   |
 +---------+------------------------------------------------------------------------------------------------------------------+
