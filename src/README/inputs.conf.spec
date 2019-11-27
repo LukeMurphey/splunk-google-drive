@@ -23,6 +23,7 @@ interval = <value>
 * Indicates how often to perform the import
 
 only_if_changed = <value>
+# DEPRECATED: this is no longer supported since Google API v4 doesn't support it
 * If true, then the import will only happen if the Google Worksheet has changed since it was last imported
 * Valid values are: 0, 1, false, true
 * Defaults to true
