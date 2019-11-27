@@ -141,7 +141,7 @@ class ServiceAccountKeysRestHandler(rest_handler.RESTHandler):
         # Write out the file
         service_key_file_path = make_splunkhome_path(['etc', 'apps', 'google_drive', 'service_account_keys', file_name])
         
-        with open(service_key_file_path, 'w') as fh:
+        with open(service_key_file_path, 'wb') as fh:
             fh.write(file_contents_decoded)
         
         # Set the input such that this key is used
