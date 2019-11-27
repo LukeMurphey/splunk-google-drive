@@ -63,7 +63,7 @@ class GoogleSpreadsheets(ModularInput):
                 Field("worksheet", "Worksheet Name", 'The name of the worksheet (e.g. "Sheet1")', empty_allowed=False),
                 Field("service_account_key_file", "OAuth2 Service Account Key File", 'The service account key with the credentials necessary for authenticating to Google', empty_allowed=False, required_on_create=False, required_on_edit=False),
                 
-                BooleanField("only_if_changed", "Import file only if changed", "If set to true, then the import will only be done if the Google worksheet was changed.", empty_allowed=True, required_on_create=True, required_on_edit=True),
+                BooleanField("only_if_changed", "Import file only if changed", "If set to true, then the import will only be done if the Google worksheet was changed.", empty_allowed=True, required_on_create=False, required_on_edit=False),
                 
                 Field("operation", "Operation", "The operation to perform (import into Splunk or export to Google Drive)", empty_allowed=False),
                 Field("lookup_name", "Lookup File Name", 'The name of the lookup file to import the content into', empty_allowed=False),
