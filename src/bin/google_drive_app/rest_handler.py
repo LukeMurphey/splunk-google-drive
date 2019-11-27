@@ -154,7 +154,10 @@ class RESTHandler(PersistentServerConnectionApplication):
 
         return {
             'payload': json.dumps(data),
-            'status': response_code
+            'status': response_code,
+            'headers': {
+                'Content-Type': 'application/json'
+            },
         }
 
     def get_forms_args_as_dict(self, form_args):

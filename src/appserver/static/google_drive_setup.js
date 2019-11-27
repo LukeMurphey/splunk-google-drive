@@ -118,7 +118,8 @@ require(['jquery','underscore','splunkjs/mvc', 'jquery', 'splunkjs/mvc/simplespl
 		            	 promise.resolve(file_name);
 		             }.bind(this),
 		             
-		             error: function(jqXHR,textStatus,errorThrown) {
+		             error: function(jqXHR, textStatus, errorThrown) {
+						 alert("Key upload failed.\n\n" + jqXHR.responseJSON.message);
 		            	 console.error("Unable to save the file");
 		            	 promise.reject("Unable to save the file");
 		             }

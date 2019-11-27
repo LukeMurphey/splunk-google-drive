@@ -113,22 +113,22 @@ class ServiceAccountKeysRestHandler(rest_handler.RESTHandler):
         # Parse the key and make sure it is valid
         service_account_email = None
         private_key_id = None
-        
+        account_key = None
+
         try:
             account_key = json.loads(file_contents_decoded)
-            
-            # Stop if the client email address is not included
-            if 'client_email' not in account_key:
-                return self.render_error_json("The service account key did not include a client email address")
-            
-            # Get the email address and key ID
-            else:
-                service_account_email = account_key['client_email']
-                private_key_id = account_key.get('private_key_id', None)
-            
         except ValueError as e:
-            return self.render_error_json("The service account key filename is invalid")
+            return self.render_error_json("The service account key is invalid")
         
+        # Stop if the client email address is not included
+        if 'client_email' not in account_key:
+            return self.render_error_json("The service account key did not include a client email address")
+        
+        # Get the email address and key ID
+        else:
+            service_account_email = account_key['client_email']
+            private_key_id = account_key.get('private_key_id', None)
+
         # Create the service account keys directory if it does not yet exist
         try:
             os.mkdir(make_splunkhome_path(['etc', 'apps', 'google_drive', 'service_account_keys']))
