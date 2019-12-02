@@ -53,9 +53,18 @@ class GoogleLookupSync(object):
         EXPORT      = "export"
         SYNCHRONIZE = "synchronize"
         
-    def __init__(self, key_file=None, logger=None):
-        
-        self.gspread_client = self.make_client(key_file)
+    def __init__(self, key_file=None, key_string=None, logger=None):
+        self.gspread_client = None
+
+        if key_file is not None:
+            self.gspread_client = self.make_client(key_file)
+
+        if self.gspread_client is None and key_string is not None:
+            self.gspread_client = self.make_client_from_string(key_string)
+    
+        if self.gspread_client is None:
+            raise ValueError("Gspread client was not constructed")
+
         self.logger = logger
         
         # Initialize a logger. This will cause it be initialized if one is not set yet.
@@ -64,6 +73,14 @@ class GoogleLookupSync(object):
         #SPL-95681
         self.update_lookup_with_rest = True
         
+    @classmethod
+    def from_service_key_file(cls, key_file, logger=None):
+        return GoogleLookupSync(key_file=key_file, logger=logger)
+
+    @classmethod
+    def from_service_key_string(cls, key_string, logger=None):
+        return GoogleLookupSync(key_string=key_string, logger=logger)
+
     def make_client(self, key_file):
         """
         Authenticate to Google and initialize a gspread client.
@@ -80,6 +97,28 @@ class GoogleLookupSync(object):
                  'https://www.googleapis.com/auth/drive']
 
         credentials = ServiceAccountCredentials.from_json_keyfile_name(key_file, scope)
+        
+        return gspread.authorize(credentials)
+
+    def make_client_from_string(self, key_string):
+        """
+        Authenticate to Google and initialize a gspread client.
+        
+        Args:
+          key_string (str): a string containing the JSON of the key file
+        """
+        
+        # Make sure the key was provided
+        if key_string is None :
+            raise ValueError("A key must be provided")
+
+        # Parse the JSON
+        key_json = json.loads(key_string)
+        
+        scope = ['https://spreadsheets.google.com/feeds',
+                 'https://www.googleapis.com/auth/drive']
+
+        credentials = ServiceAccountCredentials.from_json_keyfile_dict(key_json, scope)
         
         return gspread.authorize(credentials)
 

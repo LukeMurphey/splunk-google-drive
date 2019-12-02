@@ -36,10 +36,9 @@ class SplunkGoogleDriveTestCase(unittest.TestCase):
             return value
     
     def get_credential_file_path(self):
-        props_fh = open('../local.properties', 'r')
-        
-        props = props_fh.read()
-        return self.get_property("value[.]test[.]oauth2_credentials[ ]*[=](.*)", props, "Google credentials were not specified")
+        with open('../local.properties', 'r') as props_fh:
+            props = props_fh.read()
+            return self.get_property("value[.]test[.]oauth2_credentials[ ]*[=](.*)", props, "Google credentials were not specified")
 
     def get_credentials(self):
         # Find the path of the key
@@ -152,6 +151,20 @@ class TestGoogleSync(SplunkGoogleDriveTestCase):
     def test_open_google_spreadsheet_doesnt_exist(self):
         self.assertRaises( SpreadsheetInaccessible, lambda: self.google_lookup_sync.open_google_spreadsheet(title="this_doesnt_exist") )
 
+    def test_construct_with_json(self):
+
+        key_string = None
+
+        path = self.get_credential_file_path()
+
+        if path is not None:
+            with open(path, 'r') as json_file:
+                key_string = json_file.read()
+
+            google_sync = GoogleLookupSync.from_service_key_string(key_string)
+
+            self.assertIsNotNone(google_sync)
+
     def test_get_or_make_sheet_if_necessary(self):
         
         google_spread_sheet = self.google_lookup_sync.open_google_spreadsheet(title="test_case_make_worksheet")
@@ -215,14 +228,4 @@ class TestLookupImport(SplunkGoogleDriveTestCase):
         self.assertTrue(os.path.exists(destination_full_path), "File to import was not created properly")
         
 if __name__ == "__main__":
-    """
-    loader = unittest.TestLoader()
-    suites = []
-    suites.append(loader.loadTestsFromTestCase(TestLookupImport))
-    suites.append(loader.loadTestsFromTestCase(TestLookupExport))
-    suites.append(loader.loadTestsFromTestCase(TestGoogleSync))
-    
-    unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(suites))
-    """
-
     unittest.main()
