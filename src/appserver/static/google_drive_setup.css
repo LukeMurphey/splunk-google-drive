@@ -9,6 +9,11 @@
 	display: block;
 }
 
+/* Make the input wider */
+#private_key_id, #service_account_email{
+	width: 440px;
+}
+
 /* Setup a particular styling for drop zones */
 .dragging{
 	border: 5px dashed #ddd;
