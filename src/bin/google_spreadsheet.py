@@ -333,10 +333,8 @@ class GoogleSpreadsheets(ModularInput):
             # We store this in base64, decode it
             key_file_str = None
             if key_file_encoded is not None:
-                self.logger.warn('About to decoded the password:  %r', key_file_encoded)
                 key_file_str = base64.b64decode(key_file_encoded['content']['clear_password'])
                 key_file_str = key_file_str.decode('utf-8')
-                self.logger.warn('Decoded the password to %r', key_file_str)
             
             # Perform the operation accordingly
             if operation is not None and operation.lower() == GoogleLookupSync.Operation.IMPORT:
