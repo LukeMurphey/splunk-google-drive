@@ -119,6 +119,15 @@ class ServiceAccountKeysRestHandler(rest_handler.RESTHandler):
             return False
 
     def uploadServiceAccountKeyJSON(self, file_contents, session_key):
+        # Parse the output
+        service_account_email = None
+        private_key_id = None
+
+        try:
+            service_account_email, private_key_id = self.parseServiceAccountKey(file_contents, is_base64=True)
+        except ValueError as e:
+            return self.render_error_json(str(e))
+
         # Determine if the key already exists
         existing_key = self.get_raw_key_info_from_secure_storage(session_key)
         
@@ -134,7 +143,7 @@ class ServiceAccountKeysRestHandler(rest_handler.RESTHandler):
                 'output_mode': 'json',
             }
         else:
-            self.logger.warn("Service key already exists")
+            self.logger.info("Service key already exists; it wil be replaced with a new one")
 
             postargs = {
                 'password': file_contents,
@@ -146,17 +155,44 @@ class ServiceAccountKeysRestHandler(rest_handler.RESTHandler):
 
             # Check response
             if response.status == 200 or response.status == 201:
-                # Parse the output
+
+                # Return a response
                 return self.render_json({
                                         'filename' : '',
-                                        'private_key_id' : 'private_key_id',
-                                        'service_account_email' : 'service_account_email'
+                                        'private_key_id' : private_key_id,
+                                        'service_account_email' : service_account_email
                                         })
             else:
                 self.logger.warn("Unable to save the key file, status=%i, response=%r", response.status, content)
                 return self.render_error_json("Unable to save the key file")
         except:
             return self.render_error_json("Unable to save the key file")
+
+    def parseServiceAccountKey(self, file_contents, is_base64=False):
+
+        # Decode the content from base64 if necessary
+        if is_base64:
+            file_contents = base64.b64decode(file_contents)
+            file_contents = file_contents.decode('utf-8')
+
+        # Try to parse the file
+        account_key = None
+        try:
+            account_key = json.loads(file_contents)
+        except:
+            self.logger.warn("Unable to parse service account key")
+            self.logger.warn(file_contents)
+            raise ValueError('Key could not be parsed')
+
+        # Verify that it includes the email
+        if 'client_email' not in account_key:
+            raise ValueError('Service account key is missing the client_email')
+
+        # Get the parameters to return
+        service_account_email = account_key['client_email']
+        private_key_id = account_key.get('private_key_id', None)
+
+        return service_account_email, private_key_id
 
     def uploadServiceAccountKey(self, file_name, file_contents, session_key):
         # Ensure that the file name is valid
@@ -166,21 +202,12 @@ class ServiceAccountKeysRestHandler(rest_handler.RESTHandler):
         # Parse the key and make sure it is valid
         service_account_email = None
         private_key_id = None
-        account_key = None
 
         try:
-            account_key = json.loads(file_contents)
+            self.logger.warn(file_contents)
+            service_account_email, private_key_id = self.parseServiceAccountKey(file_contents, is_base64=True)
         except ValueError as e:
-            return self.render_error_json("The service account key is invalid")
-
-        # Stop if the client email address is not included
-        if 'client_email' not in account_key:
-            return self.render_error_json("The service account key did not include a client email address")
-
-        # Get the email address and key ID
-        else:
-            service_account_email = account_key['client_email']
-            private_key_id = account_key.get('private_key_id', None)
+            return self.render_error_json(str(e))
 
         # Create the service account keys directory if it does not yet exist
         try:
@@ -208,10 +235,6 @@ class ServiceAccountKeysRestHandler(rest_handler.RESTHandler):
                                 })
 
     def post_key(self, request_info, file_name=None, file_contents=None, **kwargs):
-        # Make sure the needed values are present
-        # if file_name is None or len(file_name.strip()) == 0:
-        #     return self.render_error_json('The file name was not provided')
-
         if file_contents is None or len(file_contents.strip()) == 0:
             return self.render_error_json('The key file was not provided')
 
@@ -239,14 +262,8 @@ class ServiceAccountKeysRestHandler(rest_handler.RESTHandler):
             return None, None
         
         # If we found the key, parse it
-        key_dict = None
         try:
-            key_dict = json.loads(key_contents['clear_password'])
-
-            service_account_email = key_dict.get('client_email', None)
-            private_key_id = key_dict.get('private_key_id', None)
-
-            return service_account_email, private_key_id
+            return self.parseServiceAccountKey(key_contents['content']['clear_password'], is_base64=True)
         except:
             self.logger.exception("Unable to parse the service account key")
             return None, None
