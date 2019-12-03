@@ -7,6 +7,7 @@ from splunk.models.field import IntField as ModelIntField
 import sys
 import time
 import splunk
+import base64
 import json
 import os
 
@@ -16,8 +17,9 @@ from httplib2 import socks
 path_to_mod_input_lib = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modular_input.zip')
 sys.path.insert(0, path_to_mod_input_lib)
 from modular_input import Field, ModularInput, DurationField, BooleanField, DeprecatedField
+from modular_input.secure_password import get_secure_password
 
-from google_drive_app import GoogleLookupSync, SpreadsheetInaccessible
+from google_drive_app import GoogleLookupSync, SpreadsheetInaccessible, SERVICE_KEY_REALM, SERVICE_KEY_USERNAME
     
 class Timer(object):
     """
@@ -103,7 +105,7 @@ class GoogleSpreadsheets(ModularInput):
             self.logger.warn("Proxy type is not recognized: %s", proxy_type)
             return None
         
-    def export_file(self, spreadsheet_title, worksheet_name, lookup_name, key_file=None, proxy_type=None, proxy_server=None, proxy_port=None, proxy_user=None, proxy_password=None, session_key=None):
+    def export_file(self, spreadsheet_title, worksheet_name, lookup_name, key_file=None, key_string=None, proxy_type=None, proxy_server=None, proxy_port=None, proxy_user=None, proxy_password=None, session_key=None):
         """
         Export the lookup from Splunk into a Google Drive Spreadsheet.
         
@@ -112,6 +114,7 @@ class GoogleSpreadsheets(ModularInput):
         worksheet_name -- The name of the worksheet within the spreadsheet to export
         lookup_name -- The name of the lookup file to export
         key_file -- The private key file
+        key_string -- The key file in string form to use for authentication
         proxy_type -- The type of the proxy server (must be one of: socks4, socks5, http)
         proxy_server -- The proxy server to use.
         proxy_port -- The port on the proxy server to use.
@@ -141,7 +144,10 @@ class GoogleSpreadsheets(ModularInput):
             
             # Perform the request
             with Timer() as timer:
-                google_lookup_sync = GoogleLookupSync.from_service_key_file(key_file, logger=self.logger)
+                if key_string is not None:
+                    google_lookup_sync = GoogleLookupSync.from_service_key_string(key_string, logger=self.logger)
+                else:
+                    google_lookup_sync = GoogleLookupSync.from_service_key_file(key_file, logger=self.logger)
                 last_updated = google_lookup_sync.export_lookup_file(lookup_name, None, None, spreadsheet_title, worksheet_name, session_key)
                 
             self.logger.info("Export completed, time=%r", timer.msecs)
@@ -159,7 +165,7 @@ class GoogleSpreadsheets(ModularInput):
         except Exception:
             self.logger.exception("A general exception was thrown when executing the export")
     
-    def import_file(self, spreadsheet_title, worksheet_name, lookup_name, key_file=None, proxy_type=None, proxy_server=None, proxy_port=None, proxy_user=None, proxy_password=None, session_key=None, spreadsheet_date_of_last_import=None, only_import_if_changed=False):
+    def import_file(self, spreadsheet_title, worksheet_name, lookup_name, key_file=None, key_string=None, proxy_type=None, proxy_server=None, proxy_port=None, proxy_user=None, proxy_password=None, session_key=None, spreadsheet_date_of_last_import=None, only_import_if_changed=False):
         """
         Import the given Google Drive Spreadsheet as a file into Splunk as a lookup file.
         
@@ -168,6 +174,7 @@ class GoogleSpreadsheets(ModularInput):
         worksheet_name -- The name of the worksheet within the spreadsheet to import
         lookup_name -- The name of the lookup file to export
         key_file -- The key file to use for authentication
+        key_string -- The key file in string form to use for authentication
         proxy_type -- The type of the proxy server (must be one of: socks4, socks5, http)
         proxy_server -- The proxy server to use.
         proxy_port -- The port on the proxy server to use.
@@ -199,7 +206,10 @@ class GoogleSpreadsheets(ModularInput):
             
             # Perform the request
             with Timer() as timer:
-                google_lookup_sync = GoogleLookupSync.from_service_key_file(key_file, logger=self.logger)
+                if key_string is not None:
+                    google_lookup_sync = GoogleLookupSync.from_service_key_string(key_string, logger=self.logger)
+                else:
+                    google_lookup_sync = GoogleLookupSync.from_service_key_file(key_file, logger=self.logger)
                 
                 # Make sure that the worksheet changed. If it hasn't don't don't bother importing.
                 if only_import_if_changed and spreadsheet_date_of_last_import is not None:
@@ -314,6 +324,19 @@ class GoogleSpreadsheets(ModularInput):
             """
             
             date_worksheet_last_updated = self.get_date_last_imported(input_config.checkpoint_dir, stanza)
+
+            # Get the stored password
+            key_file_encoded = get_secure_password(realm=SERVICE_KEY_REALM,
+                                                   username=SERVICE_KEY_USERNAME,
+                                                   session_key=input_config.session_key)
+
+            # We store this in base64, decode it
+            key_file_str = None
+            if key_file_encoded is not None:
+                self.logger.warn('About to decoded the password:  %r', key_file_encoded)
+                key_file_str = base64.b64decode(key_file_encoded['content']['clear_password'])
+                key_file_str = key_file_str.decode('utf-8')
+                self.logger.warn('Decoded the password to %r', key_file_str)
             
             # Perform the operation accordingly
             if operation is not None and operation.lower() == GoogleLookupSync.Operation.IMPORT:

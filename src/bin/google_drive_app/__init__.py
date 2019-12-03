@@ -36,6 +36,9 @@ sys.path.append(make_splunkhome_path(['etc', 'apps', 'google_drive', 'bin', 'goo
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
+SERVICE_KEY_REALM = 'google_service_key'
+SERVICE_KEY_USERNAME = 'GOOGLE_DRIVE_APP'
+
 class SpreadsheetInaccessible(Exception):
     pass
 
