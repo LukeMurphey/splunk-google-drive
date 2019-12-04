@@ -375,9 +375,6 @@ class ServiceAccountKeysRestHandler(rest_handler.RESTHandler):
 
     def get_key(self, request_info, **kwargs):
         try:
-            # Migrate the key if necessary
-            # self.migrateKeyToSecureStorage(request_info.session_key)
-
             file_name = None
             service_account_email = None
             private_key_id = None
