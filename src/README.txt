@@ -95,4 +95,8 @@ Change History
 |         | Google Drive updates are now done in batch in order to reduce API usage and improve performance                  |
 |         | Service account key is now stored in Splunk's secure password storage system                                     |
 |         | Added button on setup screen that will migrate the service account key to secure storage                         |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 2.0.1   | Specifying inputs.conf attributes that are not longer supported or deprecated                                    |
+|         | Fixing incorrect entry in props.conf                                                                             |
+|         | Improving app certification                                                                                      |
 +---------+------------------------------------------------------------------------------------------------------------------+
