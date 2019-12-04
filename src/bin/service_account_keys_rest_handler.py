@@ -15,6 +15,7 @@ from splunk.rest import simpleRequest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from google_drive_app import rest_handler
 from google_drive_app.six.moves.urllib.parse import quote_plus
+from google_drive_app.six import binary_type
 from google_drive_app import SERVICE_KEY_REALM, SERVICE_KEY_USERNAME
 
 path_to_mod_input_lib = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modular_input.zip')
@@ -89,6 +90,22 @@ class ServiceAccountKeysRestHandler(rest_handler.RESTHandler):
     def getDefaultGoogleDriveInputEntity(self, session_key):
         return entity.getEntity('admin/conf-inputs', 'google_spreadsheet', sessionKey=session_key)
 
+    def getKeyFileContents(self, session_key):
+        default_password_entry = self.getDefaultGoogleDriveInputEntity(session_key)
+
+        # Make sure the file name is specified in the default entry
+        if 'service_account_key_file' in default_password_entry:
+            file_name = default_password_entry['service_account_key_file']
+            service_key_file_path = make_splunkhome_path(['etc', 'apps', 'google_drive', 'service_account_keys', file_name])
+            service_key = None
+            
+            with open(service_key_file_path, 'r') as fh:
+                service_key = fh.read()
+
+                return service_key
+
+        return None
+
     def getInfoFromKeyFile(self, file_name):
         
         service_key_file_path = make_splunkhome_path(['etc', 'apps', 'google_drive', 'service_account_keys', file_name])
@@ -109,8 +126,15 @@ class ServiceAccountKeysRestHandler(rest_handler.RESTHandler):
             
         return None, None
 
-    def removeServiceAccountKeyJSON(self, stanza, session_key):
-        response, _ = simpleRequest('/services/storage/passwords/' + quote_plus(stanza), sessionKey=session_key, method='DELETE')
+    def refreshServiceAccountKey(self, session_key):
+        stanza = get_secure_password_stanza(SERVICE_KEY_USERNAME, SERVICE_KEY_REALM)
+        _, _ = simpleRequest('/services/storage/passwords/_reload' + quote_plus(stanza), sessionKey=session_key)
+
+    def removeServiceAccountKey(self, session_key):
+        stanza = get_secure_password_stanza(SERVICE_KEY_USERNAME, SERVICE_KEY_REALM)
+        self.logger.warn("About to delete service key, stanza=%s", stanza)
+
+        response, _ = simpleRequest('/servicesNS/nobody/search/storage/passwords/' + quote_plus(stanza), sessionKey=session_key, method='DELETE')
 
         # Check response
         if response.status == 200 or response.status == 201:
@@ -129,7 +153,7 @@ class ServiceAccountKeysRestHandler(rest_handler.RESTHandler):
             return self.render_error_json(str(e))
 
         # Determine if the key already exists
-        existing_key = self.get_raw_key_info_from_secure_storage(session_key)
+        existing_key = self.retrieve_raw_key_info_from_secure_storage(session_key)
         
         # Get secure password stanza
         stanza = get_secure_password_stanza(SERVICE_KEY_USERNAME, SERVICE_KEY_REALM)
@@ -167,6 +191,44 @@ class ServiceAccountKeysRestHandler(rest_handler.RESTHandler):
                 return self.render_error_json("Unable to save the key file")
         except:
             return self.render_error_json("Unable to save the key file")
+
+    def migrateKeyToSecureStorage(self, session_key):
+
+        # Find out if we have a key on the file-system
+        service_account_email, _, _ = self.retrieve_key_info_from_file_system(session_key)
+        
+        if service_account_email is None:
+            return False
+
+        # Find out if we have a key in secure storage
+        existing_key = self.retrieve_raw_key_info_from_secure_storage(session_key)
+
+        if existing_key is not None:
+            return False
+
+        # Read in the file
+        service_key = None
+        try:
+            service_key = self.getKeyFileContents(session_key)
+        except:
+            self.logger.error('Unable to load the key file for migration')
+
+        # Convert the string to bytes so that it can be encoded
+        if not isinstance(service_key, binary_type):
+            service_key = service_key.encode('utf-8')
+
+        # Base64 encode the key
+        service_key_encoded = base64.b64encode(service_key)
+        service_key_encoded = service_key_encoded.decode('utf-8')
+
+        # Convert the key over
+        response = self.uploadServiceAccountKeyJSON(service_key_encoded, session_key)
+
+        if response is not None:
+            if 'success' in response and not response.get('success', False):
+                self.logger.info('Unable to load the key file for migration: %s', response['message'])
+
+            return response
 
     def parseServiceAccountKey(self, file_contents, is_base64=False):
 
@@ -234,6 +296,18 @@ class ServiceAccountKeysRestHandler(rest_handler.RESTHandler):
                                  'service_account_email' : service_account_email
                                 })
 
+    def post_key_migrate(self, request_info, **kwargs):
+        # Migrate the key if necessary
+        migrated = self.migrateKeyToSecureStorage(request_info.session_key)
+
+        # Get the updated key information
+        response_json = self.get_key(request_info)
+
+        # Note whether we migrated the key
+        response_json['migrated'] = migrated
+
+        return response_json
+
     def post_key(self, request_info, file_name=None, file_contents=None, **kwargs):
         if file_contents is None or len(file_contents.strip()) == 0:
             return self.render_error_json('The key file was not provided')
@@ -247,15 +321,15 @@ class ServiceAccountKeysRestHandler(rest_handler.RESTHandler):
         # Upload via secure storage
         return self.uploadServiceAccountKeyJSON(file_contents, request_info.session_key)
 
-    def get_raw_key_info_from_secure_storage(self, session_key):
+    def retrieve_raw_key_info_from_secure_storage(self, session_key):
         # Get the proxy password from secure storage (if it exists)
         return get_secure_password(realm=SERVICE_KEY_REALM,
                                    username=SERVICE_KEY_USERNAME,
                                    session_key=session_key)
 
-    def get_key_info_from_secure_storage(self, session_key):
+    def retrieve_key_info_from_secure_storage(self, session_key):
         # Get the key from secure storage (if it exists)
-        key_contents = self.get_raw_key_info_from_secure_storage(session_key)
+        key_contents = self.retrieve_raw_key_info_from_secure_storage(session_key)
 
         # Stop if we don't get anything
         if key_contents is None:
@@ -268,7 +342,7 @@ class ServiceAccountKeysRestHandler(rest_handler.RESTHandler):
             self.logger.exception("Unable to parse the service account key")
             return None, None
 
-    def get_key_info_from_file_system(self, session_key):
+    def retrieve_key_info_from_file_system(self, session_key):
         # Get the existing service key
         default_password_entry = self.getDefaultGoogleDriveInputEntity(session_key)
 
@@ -282,18 +356,38 @@ class ServiceAccountKeysRestHandler(rest_handler.RESTHandler):
         
         return None, None, None
 
+    def post_remove_key(self, request_info, **kwargs):
+        try:
+            success = self.removeServiceAccountKey(request_info.session_key)
+            response = self.get_key(request_info)
+
+            if success:
+                self.logger.info("Removed service account key from secure storage")
+                response['message'] = 'existing key removed'
+            else:
+                self.logger.warn("Failed to remove service account key from secure storage")
+                response['message'] = 'existing key was not removed'
+
+            return response
+        except:
+            self.logger.exception("Exception generated when attempting to remove the old key")
+            return self.render_error_json("Exception generated when attempting to remove the old key")
+
     def get_key(self, request_info, **kwargs):
         try:
+            # Migrate the key if necessary
+            # self.migrateKeyToSecureStorage(request_info.session_key)
+
             file_name = None
             service_account_email = None
             private_key_id = None
 
             # Try getting the information from secure storage
-            service_account_email, private_key_id = self.get_key_info_from_secure_storage(request_info.session_key)
+            service_account_email, private_key_id = self.retrieve_key_info_from_secure_storage(request_info.session_key)
 
             # Try loading the key from the file-system otherwise
             if service_account_email is None:
-                service_account_email, private_key_id, file_name = self.get_key_info_from_file_system(request_info.session_key)
+                service_account_email, private_key_id, file_name = self.retrieve_key_info_from_file_system(request_info.session_key)
 
             # Return the information
             return self.render_json({

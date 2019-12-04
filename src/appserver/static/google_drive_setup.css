@@ -10,7 +10,7 @@
 }
 
 /* Make the input wider */
-#private_key_id, #service_account_email{
+#private_key_id, #service_account_email, .empty_private_key_id, .empty_service_account_email{
 	width: 440px;
 }
 

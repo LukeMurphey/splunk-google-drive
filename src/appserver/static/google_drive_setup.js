@@ -13,7 +13,9 @@ require(['jquery','underscore','splunkjs/mvc', 'jquery', 'splunkjs/mvc/simplespl
 	        
 	        events: {
 	        	"click #choose-import-file" : "chooseImportFile",
-	        	"change #import-file-input" : "handleUploadedFile" //handleUploadedFile
+				"change #import-file-input" : "handleUploadedFile",
+				"click #migrate_key" : "handleKeyMigration",
+				"click #remove_key" : "handleKeyRemove"
 	        },
 	        
 	        initialize: function() {
@@ -127,7 +129,63 @@ require(['jquery','underscore','splunkjs/mvc', 'jquery', 'splunkjs/mvc/simplespl
 
 	        	return promise;
 	        },
-	        
+			
+			/**
+	         * Handle the conversion of the key from the file-system to secure storage.
+	         */
+			handleKeyMigration: function(evt){
+
+	        	var uri = splunkd_utils.fullpath(['/services/data/service_account_keys/key_migrate'].join('/'));
+	           
+	        	jQuery.ajax({
+					 url: uri,
+					 method: 'POST',
+		             
+		             success: function(result) {
+		            	 
+		            	// Save the information about the key
+		            	 this.service_account_email = result['service_account_email'];
+		            	 this.private_key_id = result['private_key_id'];
+		            	 this.filename = result['filename'];
+		            	 
+		            	// Update the UI
+		            	 this._render();
+		             }.bind(this),
+		             
+		             error: function(jqXHR,textStatus,errorThrown) {
+		            	 alert("Unable to the service key to secure storage");
+		             }
+	        	});
+			},
+
+			/**
+	         * Handle the removal of the key from secure storage.
+	         */
+			handleKeyRemove: function(evt){
+
+	        	var uri = splunkd_utils.fullpath(['/services/data/service_account_keys/remove_key'].join('/'));
+	           
+	        	jQuery.ajax({
+					 url: uri,
+					 type: "POST",
+		             
+		             success: function(result) {
+		            	 
+		            	// Save the information about the key
+		            	 this.service_account_email = result['service_account_email'];
+		            	 this.private_key_id = result['private_key_id'];
+		            	 this.filename = result['filename'];
+		            	 
+		            	// Update the UI
+		            	 this._render();
+		             }.bind(this),
+		             
+		             error: function(jqXHR,textStatus,errorThrown) {
+		            	 alert("Unable to remove the current service key from secure storage");
+		             }
+	        	});
+			},
+
 	        /**
 	         * Handle the event that occurs when a file is uploaded
 	         */
@@ -258,7 +316,16 @@ require(['jquery','underscore','splunkjs/mvc', 'jquery', 'splunkjs/mvc/simplespl
 	        		$('.show_when_no_key').hide();
 	        		$('.show_when_with_key').show();
 	        		$('#service_account_email').val(this.service_account_email);
-	        		$('#private_key_id').val(this.private_key_id);
+					$('#private_key_id').val(this.private_key_id);
+					
+					if(this.filename === null || this.filename.length === 0){
+						$('.key_unsecured').hide();
+						$('.key_secured').show();
+					}
+					else {
+						$('.key_unsecured').show();
+						$('.key_secured').hide();
+					}
 	        	}
 	        	
 	        	// Show the parts of the view that show that a key has _not_ been loaded

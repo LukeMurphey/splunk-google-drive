@@ -340,12 +340,12 @@ class GoogleSpreadsheets(ModularInput):
             if operation is not None and operation.lower() == GoogleLookupSync.Operation.IMPORT:
                 
                 # Perform the import
-                date_worksheet_last_updated = self.import_file(google_spreadsheet, google_worksheet, lookup_name, key_file=self.resolve_credential_file(service_account_key_file), proxy_type=proxy_type, proxy_server=proxy_server, proxy_port=proxy_port, proxy_user=proxy_user, proxy_password=proxy_password, session_key=input_config.session_key, only_import_if_changed=only_if_changed, spreadsheet_date_of_last_import=date_worksheet_last_updated)
+                date_worksheet_last_updated = self.import_file(google_spreadsheet, google_worksheet, lookup_name, key_string=key_file_str, key_file=self.resolve_credential_file(service_account_key_file), proxy_type=proxy_type, proxy_server=proxy_server, proxy_port=proxy_port, proxy_user=proxy_user, proxy_password=proxy_password, session_key=input_config.session_key, only_import_if_changed=only_if_changed, spreadsheet_date_of_last_import=date_worksheet_last_updated)
             
             elif operation is not None and operation.lower() == GoogleLookupSync.Operation.EXPORT:
                 
                 # Perform the export
-                date_worksheet_last_updated = self.export_file(google_spreadsheet, google_worksheet, lookup_name, key_file=self.resolve_credential_file(service_account_key_file), proxy_type=proxy_type, proxy_server=proxy_server, proxy_port=proxy_port, proxy_user=proxy_user, proxy_password=proxy_password, session_key=input_config.session_key)
+                date_worksheet_last_updated = self.export_file(google_spreadsheet, google_worksheet, lookup_name, key_string=key_file_str, key_file=self.resolve_credential_file(service_account_key_file), proxy_type=proxy_type, proxy_server=proxy_server, proxy_port=proxy_port, proxy_user=proxy_user, proxy_password=proxy_password, session_key=input_config.session_key)
             
             else:
                 self.logger.warning("No valid operation specified for the stanza=%s", stanza)

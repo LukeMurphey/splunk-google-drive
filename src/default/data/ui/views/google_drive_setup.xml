@@ -20,11 +20,11 @@
 					<div class="control-group">
 						<label for="" class="control-label">Key ID</label>
 						<div class="controls controls-block">
-							<input type="text" disabled="true" />
+							<input type="text" class="empty_service_account_email" disabled="true" />
 						</div>
 						<label for="#" class="control-label">Service Account Client Email</label>
 						<div class="controls controls-block">
-							<input type="text" disabled="true" />
+							<input type="text" class="empty_private_key_id" disabled="true" />
 							<span class="control-feedback">No account key is defined</span>
 						</div>
 					</div>
@@ -33,7 +33,19 @@
 			</div>
 			
 			<div class="show_when_with_key">
-	
+				<div action="#" class="key_unsecured">
+					<div class="alert alert-warning">
+						<i class="icon-alert"></i>
+						The service account key is not stored in secure storage. <button class="btn" id="migrate_key" >Move to secure storage</button>
+					</div>
+				</div>
+
+				<div action="#" class="key_secured">
+					<div class="alert alert-info">
+						<i class="icon-alert"></i>
+						The service account key is currently stored in secure storage. <button class="btn hide" id="remove_key">Remove</button>
+					</div>
+				</div>
 				<div action="#" class="form form-complex">
 					<div class="control-group">
 						<label for="private_key_id" class="control-label">Key ID</label>
