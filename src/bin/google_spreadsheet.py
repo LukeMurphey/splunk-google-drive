@@ -14,6 +14,7 @@ import os
 import httplib2
 from httplib2 import socks
 
+# Import the modular input components
 path_to_mod_input_lib = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modular_input.zip')
 sys.path.insert(0, path_to_mod_input_lib)
 from modular_input import Field, ModularInput, DurationField, BooleanField, DeprecatedField
