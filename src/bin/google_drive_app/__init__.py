@@ -18,6 +18,7 @@ from . import lookupfiles
 import os
 import sys
 import json
+import shutil
 
 from splunk.clilib.bundle_paths import make_splunkhome_path
 
@@ -30,7 +31,16 @@ for path in sys.path:
 for path in paths_to_remove:
     sys.path.remove(path)
 
-sys.path.append(make_splunkhome_path(['etc', 'apps', 'google_drive', 'bin', 'google_drive_app']))
+# Remove the httplib2 library since this causes issues (https://lukemurphey.net/issues/2540)
+try:
+    shutil.rmtree(make_splunkhome_path(['etc', 'apps', 'google_drive', 'bin', 'google_drive_app', 'httplib2']))
+except OSError:
+    # The library doesn't exist; that's ok
+    pass
+
+# Add the imports
+# Put the google_drive_app app first so that the app uses the newer version of requests which gspread expects
+sys.path.insert(0, make_splunkhome_path(['etc', 'apps', 'google_drive', 'bin', 'google_drive_app']))
 sys.path.append(make_splunkhome_path(['etc', 'apps', 'google_drive', 'bin', 'google_drive_app', 'oauth2client']))
 
 import gspread

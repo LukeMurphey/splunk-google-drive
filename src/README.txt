@@ -99,4 +99,6 @@ Change History
 | 2.0.1   | Specifying inputs.conf attributes that are not longer supported or deprecated                                    |
 |         | Fixing incorrect entry in props.conf                                                                             |
 |         | Improving app certification                                                                                      |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 2.0.2   | Fixing issue where app would sometimes fail due to an older version of the requests library                      |
 +---------+------------------------------------------------------------------------------------------------------------------+
