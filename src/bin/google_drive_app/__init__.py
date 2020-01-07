@@ -378,6 +378,37 @@ class GoogleLookupSync(object):
         
         return self.import_to_lookup_file_full_path(destination_full_path, namespace, owner, google_spread_sheet_name, worksheet_name, session_key, create_if_non_existent, lookup_name=lookup_name)
         
+    def get_column_id(self, offset):
+        """
+        Get the ID of the column.
+        """
+
+        col_id = ''
+        offset_left = offset
+
+        while offset_left >= 0:
+            next_val = offset_left % 26
+            col_id = chr(65 + next_val) + col_id
+
+            if offset_left == 0:
+                offset_left = -1
+            else:
+                offset_left = (offset_left / 26) - 1
+
+        return col_id
+
+    def convert_to_dict(self, list_of_lists):
+        l = []
+
+        for row in list_of_lists:
+            next_list = {}
+            for index, value in enumerate(row):
+                next_list[self.get_column_id(index)] = value
+
+            l.append(next_list)
+
+        return l
+
     def import_to_lookup_file_full_path(self, destination_full_path, namespace, owner, google_spread_sheet_name, worksheet_name, session_key, create_if_non_existent=False, lookup_name=None):
         """
         Import the spreadsheet from Google to the given lookup file.

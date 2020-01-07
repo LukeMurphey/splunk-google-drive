@@ -101,6 +101,25 @@ class TestLookupExport(SplunkGoogleDriveTestCase):
         
         worksheet.clear()
         
+    def test_get_column_id(self):
+        self.assertEquals(self.google_lookup_sync.get_column_id(0), 'A')
+        self.assertEquals(self.google_lookup_sync.get_column_id(1), 'B')
+        self.assertEquals(self.google_lookup_sync.get_column_id(25), 'Z')
+
+        self.assertEquals(self.google_lookup_sync.get_column_id(26), 'AA')
+        self.assertEquals(self.google_lookup_sync.get_column_id(27), 'AB')
+        self.assertEquals(self.google_lookup_sync.get_column_id(50), 'AY')
+        self.assertEquals(self.google_lookup_sync.get_column_id(51), 'AZ')
+        self.assertEquals(self.google_lookup_sync.get_column_id(52), 'BA')
+
+    def test_convert_to_dict(self):
+        l = self.google_lookup_sync.convert_to_dict([[1,2,3,4], [5,6,7,8]])
+        self.assertEquals(l[0]['A'], 1)
+        self.assertEquals(l[0]['B'], 2)
+
+        self.assertEquals(l[1]['A'], 5)
+        self.assertEquals(l[1]['B'], 6)
+
     def test_export_by_lookup_name(self):
         
         session_key = splunk.auth.getSessionKey(username='admin', password='changeme')
