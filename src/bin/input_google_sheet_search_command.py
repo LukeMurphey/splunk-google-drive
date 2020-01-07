@@ -81,6 +81,7 @@ class InputGoogleSheetSearchCommand(SearchCommand):
         # Get the contents of spreadsheet
         list_of_lists = google_work_sheet.get_all_values()
 
+        # Convert the results to a dictionary
         results = google_lookup_sync.convert_to_dict(list_of_lists)
 
         # Output the results
