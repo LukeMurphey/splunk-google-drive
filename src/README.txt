@@ -105,4 +105,6 @@ Change History
 | 2.0.3   | Fixing issue where app would fail when checking for SHC support                                                  |
 |---------|------------------------------------------------------------------------------------------------------------------|
 | 2.0.4   | Fixing issue where app would fail when it a file-system key didn't exist                                         |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 2.0.5   | Removing log messages regarding the details of the service account key when it could not be loaded               |
 +---------+------------------------------------------------------------------------------------------------------------------+

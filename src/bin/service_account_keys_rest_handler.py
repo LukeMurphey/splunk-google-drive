@@ -243,7 +243,6 @@ class ServiceAccountKeysRestHandler(rest_handler.RESTHandler):
             account_key = json.loads(file_contents)
         except:
             self.logger.warn("Unable to parse service account key")
-            self.logger.warn(file_contents)
             raise ValueError('Key could not be parsed')
 
         # Verify that it includes the email
@@ -266,7 +265,6 @@ class ServiceAccountKeysRestHandler(rest_handler.RESTHandler):
         private_key_id = None
 
         try:
-            self.logger.warn(file_contents)
             service_account_email, private_key_id = self.parseServiceAccountKey(file_contents, is_base64=True)
         except ValueError as e:
             return self.render_error_json(str(e))
