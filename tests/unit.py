@@ -245,6 +245,28 @@ class TestLookupImport(SplunkGoogleDriveTestCase):
         destination_full_path = lookupfiles.SplunkLookupTableFile.get(lookupfiles.SplunkLookupTableFile.build_id(lookup_name, namespace, owner), sessionKey=session_key).path
         
         self.assertTrue(os.path.exists(destination_full_path), "File to import was not created properly")
+
+class TestFileImport(SplunkGoogleDriveTestCase):
         
+    def test_get_file_info(self):
+        
+        session_key = splunk.auth.getSessionKey(username='admin', password='changeme')
+        namespace = "search"
+        owner = "nobody"
+        created_file_path = None
+        
+        with lookupfiles.get_temporary_lookup_file() as temp_file:
+            
+            created_file_path = temp_file.name
+            
+            # Import the file
+            self.google_lookup_sync.import_to_lookup_file_full_path(created_file_path, namespace, owner, "test_case_import", "data", session_key, create_if_non_existent=True)
+        
+        # Check the results
+        self.assertTrue(os.path.exists(created_file_path), "Lookup file did not get created")
+        #print 'File imported successfully, size=%r, path=%r' % (os.path.getsize(created_file_path), created_file_path)
+        self.assertGreaterEqual(os.path.getsize(created_file_path), 40, "Lookup file was not populated correctly (is %i bytes)" % (os.path.getsize(created_file_path)))
+        
+
 if __name__ == "__main__":
     unittest.main()
