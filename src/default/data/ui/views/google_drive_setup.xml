@@ -1,4 +1,4 @@
-<dashboard script="google_drive_setup.js" stylesheet="google_drive_setup.css" hideAppBar="true" hideEdit="true" hideTitle="true" isDashboard="false">
+<dashboard version="1.1" script="google_drive_setup.js" stylesheet="google_drive_setup.css" hideAppBar="true" hideEdit="true" hideTitle="true" isDashboard="false">
   <label>Google Drive Setup</label>
   <row>
     <panel>

@@ -30,6 +30,7 @@ You will need to create an OAuth2 service account key from Google and assign the
 
      http://lukemurphey.net/projects/splunk-google-docs/wiki/How_to_setup_app
 
+Open the setup view in the app to upload the service account key. The setup view can be accessed at google_drive_setup (e.g. http://MySplunkInstall:8000/en-US/app/search/google_drive_setup).
 
 
 ================================================
@@ -107,4 +108,6 @@ Change History
 | 2.0.4   | Fixing issue where app would fail when it a file-system key didn't exist                                         |
 |---------|------------------------------------------------------------------------------------------------------------------|
 | 2.0.5   | Removing log messages regarding the details of the service account key when it could not be loaded               |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 2.0.6   | Fixing app inspect issues to add Splunk Cloud support                                                            |
 +---------+------------------------------------------------------------------------------------------------------------------+
